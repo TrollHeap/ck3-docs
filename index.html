@@ -22,6 +22,67 @@ nav{display:grid;gap:4px}nav a{display:flex;justify-content:space-between;gap:8p
 
 @media(max-width:1180px){.app{grid-template-columns:var(--sidebar) minmax(0,1fr)}.rail{display:none}.quick{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){.app{display:block}.sidebar{position:fixed;z-index:50;left:0;top:0;transform:translateX(-103%);transition:.18s ease;width:min(86vw,330px)}.sidebar.open{transform:translateX(0)}.mobilebar{display:flex;gap:8px;align-items:center}.main{padding:18px 14px 70px}.quick,.two,.three{grid-template-columns:1fr}.hero{border-radius:22px}.recipe-head{display:block}}
+
+
+/* === Desktop workspace readability pass v0.7 ===
+   Goal: make the page comfortable at 100% zoom on large monitors while
+   keeping the split-screen / mobile behavior intact. */
+@media (min-width:1181px){
+  :root{--content-max:1680px;--sidebar:312px;--rail:320px}
+  body{font-size:clamp(16px,.45vw + 9.8px,18px);line-height:1.64}
+  .app{grid-template-columns:minmax(284px,var(--sidebar)) minmax(0,1fr) minmax(286px,var(--rail));align-items:start}
+  .main{width:min(100%,var(--content-max));max-width:var(--content-max);margin:0 auto;padding:clamp(30px,2.2vw,52px) clamp(30px,2.5vw,66px) 108px}
+  .sidebar,.rail{padding:22px 16px}
+  .brand h1{font-size:17px}.brand p{font-size:12px}.logo{width:46px;height:46px}
+  nav a{font-size:13.8px;padding:9px 11px}.badge{font-size:10.5px}
+  .tab{font-size:12.5px;padding:11px 8px}.button,.commandBtn,.langBtn{font-size:13px}
+  .input,textarea,select{font-size:14.5px;padding:11px 12px}
+  .hero{padding:clamp(34px,3.25vw,60px);border-radius:32px;margin-bottom:28px}
+  .hero h2{font-size:clamp(43px,3.05vw,70px);max-width:1260px;line-height:1.04}
+  .hero p{font-size:clamp(18px,1.02vw,21px);max-width:1220px;line-height:1.58}
+  .quick{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:24px}
+  .quick a,.mini{padding:16px 17px;font-size:15px}.sub{font-size:13px}
+  .section{padding:clamp(30px,2.15vw,42px);margin:24px 0;border-radius:28px}
+  .section h2{font-size:clamp(29px,1.55vw,38px);line-height:1.18;margin-bottom:11px}
+  .section h3{font-size:clamp(20px,1.05vw,24px)}
+  .section h4{font-size:15px}.kicker{font-size:12.5px}
+  .section>p,.section>ul,.section>ol{max-width:1220px}
+  p,li{font-size:clamp(15.8px,.45vw + 10px,17.5px)}
+  .grid{gap:16px}.two{grid-template-columns:repeat(auto-fit,minmax(390px,1fr))}.three{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+  .card{padding:19px;border-radius:20px}.card p,.callout,.step{font-size:16px}.callout{padding:15px 17px}
+  .codewrap{margin:15px 0}.codewrap pre{font-size:14px;line-height:1.62;padding:22px 18px 18px;border-radius:18px}
+  .diagram{font-size:14px;line-height:1.62;padding:18px;border-radius:18px}
+  .recipe-card{padding:24px;border-radius:26px;margin:22px 0}.recipe-head h3{font-size:24px}.tag{font-size:12px;padding:4px 9px}.steps{gap:10px}.step{padding:13px 13px 13px 48px}.step:before{left:14px;top:13px;width:23px;height:23px}
+  .rail h3{font-size:13.5px}.rail .mini{font-size:14px}.check{padding:11px}.check span{font-size:14px;line-height:1.45}
+  .section-tools{right:18px;top:18px}.iconbtn{font-size:12px;padding:6px 9px}
+}
+@media (min-width:1700px){
+  :root{--content-max:1760px;--sidebar:320px;--rail:330px}
+  .main{padding-left:clamp(42px,3vw,76px);padding-right:clamp(42px,3vw,76px)}
+  .hero h2{font-size:clamp(56px,3.15vw,76px)}
+}
+@media (min-width:2200px){
+  :root{--content-max:1880px;--sidebar:330px;--rail:340px}
+  .main{max-width:var(--content-max)}
+}
+@media (max-width:1180px){
+  .main{max-width:none;margin:0;padding:26px clamp(18px,3.4vw,38px) 90px}
+  body{font-size:16px}
+  .hero h2{font-size:clamp(34px,5vw,54px)}
+  .section h2{font-size:clamp(25px,3vw,32px)}
+  .codewrap pre,.diagram{font-size:13.5px}
+}
+@media (max-width:820px){
+  body{font-size:16px;line-height:1.62}
+  .main{padding:18px 14px 70px}
+  .hero h2{font-size:clamp(31px,9vw,42px)}
+  .hero p{font-size:16px}
+  .section{padding:20px;border-radius:22px;margin:16px 0}
+  .section h2{font-size:24px}.section h3{font-size:18px}
+  p,li{font-size:15.5px}
+  .codewrap pre,.diagram{font-size:12.8px}
+}
+
 </style>
 </head>
 <body>

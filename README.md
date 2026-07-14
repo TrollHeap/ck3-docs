@@ -53,35 +53,6 @@ http://localhost:8080
 - `Ctrl + K` / `Cmd + K` — open the command palette.
 - `Esc` — close dropdowns, overlays, or command palette.
 
-## Recommended Repository Structure
-
-```txt
-ck3-scenario-docs/
-├── index.html
-├── README.md
-└── .nojekyll
-```
-
-The `.nojekyll` file is recommended when deploying to GitHub Pages to ensure the page is served as a plain static site.
-
-## Deployment
-
-### GitHub Pages
-
-1. Push `index.html`, `README.md`, and `.nojekyll` to a GitHub repository.
-2. Go to **Settings → Pages**.
-3. Select **Deploy from a branch**.
-4. Choose the `main` branch and `/root` folder.
-5. Save and wait for the generated Pages URL.
-
-### Netlify Drop
-
-For a quick preview, drag and drop the folder containing `index.html` into Netlify Drop.
-
-### Cloudflare Pages
-
-Use Direct Upload if you want to upload the folder without connecting a Git repository.
-
 ## Notes
 
 This documentation is intentionally practical rather than exhaustive. It focuses on patterns that are useful when building complex CK3 narrative systems, especially long-running story cycles with multiple characters, fallback branches, delayed events, and debugging safeguards.
