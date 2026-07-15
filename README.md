@@ -1,64 +1,93 @@
-# CK3 Scenario Modding Docs
+# CK3 Scenario Docs — Astro migration
 
-A lightweight, single-file documentation website for Crusader Kings III scenario and story-cycle modding.
+This is the refactored Astro version of the previous single-file `index.html`.
 
-This project provides a practical reference for building reusable narrative systems in CK3 mods: event chains, story campaigns, persistent story variables, scripted effects, actor registries, branching outcomes, debugging patterns, and copy-ready recipes.
+## Why this migration exists
 
-## Features
+The old site had all of this in one HTML file:
 
-- **Single `index.html` file** — no build step, no framework, no dependencies.
-- **Multilingual interface** — English by default, with Spanish and French available from the language dropdown.
-- **Documentation + recipe library** — general CK3 scenario principles plus reusable implementation patterns.
-- **Copy-ready snippets** — event templates, story-cycle patterns, travel missions, infiltration checks, endings, and notification flows.
-- **Developer-focused tools** — command palette, quick search, persistent checklist, section anchors, pinned sections, and code copy buttons.
-- **Mobile and split-screen friendly** — designed to stay readable while coding next to your editor.
+- global CSS
+- global JS
+- tab state
+- sidebar logic
+- recipes UI
+- tools generator
+- checklist state
+- Jomini syntax highlighting
 
-## Main Sections
+That made fixes fragile. This Astro version separates the site into pages and components.
 
-- **Docs** — architecture, event lifecycle, scopes, story variables, war/faction logic, artifacts, localization, and debug workflow.
-- **Recipes** — ready-to-copy patterns for common scenario systems:
-  - create a full story campaign;
-  - create or retrieve an important actor;
-  - send an agent on a mission;
-  - build an infiltration cycle;
-  - run an investigation with cooldown;
-  - create canon / non-canon endings;
-  - transfer the player to another character;
-  - create a global crisis with regional notifications.
-- **Tools** — quick generator, persistent checklist, debug notes, and reference links.
-
-## Usage
-
-Open the file directly in your browser:
-
-```bash
-open index.html
-```
-
-Or serve it locally:
-
-```bash
-python3 -m http.server 8080
-```
-
-Then open:
+## Structure
 
 ```txt
-http://localhost:8080
+src/
+├─ components/
+│  ├─ ChecklistDrawer.astro
+│  └─ CodeBlock.astro
+├─ data/
+│  └─ appData.json
+├─ layouts/
+│  └─ AppLayout.astro
+├─ pages/
+│  ├─ index.astro
+│  └─ [lang]/
+│     ├─ docs/index.astro
+│     ├─ recipes/index.astro
+│     ├─ recipes/[id]/index.astro
+│     └─ tools/index.astro
+├─ styles/
+│  └─ global.css
+└─ utils/
+   ├─ highlight.js
+   └─ paths.js
 ```
 
-## Keyboard Shortcuts
+## Commands
 
-- `/` — focus quick search.
-- `Ctrl + K` / `Cmd + K` — open the command palette.
-- `Esc` — close dropdowns, overlays, or command palette.
+```bash
+npm install
+npm run dev
+npm run build
+npm run preview
+```
 
-## Notes
+## GitHub Pages
 
-This documentation is intentionally practical rather than exhaustive. It focuses on patterns that are useful when building complex CK3 narrative systems, especially long-running story cycles with multiple characters, fallback branches, delayed events, and debugging safeguards.
+The repository `TrollHeap/ck3-docs` should use:
 
-The examples are generic, but some patterns are inspired by Warcraft-themed CK3 scenario modding workflows.
+```js
+base: '/ck3-docs/'
+```
 
-## License
+This is already set in `astro.config.mjs`.
 
-Use and adapt freely for internal modding documentation unless your project requires a specific license.
+Build output will be in:
+
+```txt
+dist/
+```
+
+Deploy `dist/` with GitHub Actions or another static host.
+
+## Current routes
+
+```txt
+/en/docs/
+/en/recipes/
+/en/recipes/<recipe-id>/
+/en/tools/
+
+/fr/docs/
+/fr/recipes/
+/fr/recipes/<recipe-id>/
+/fr/tools/
+
+/es/docs/
+/es/recipes/
+/es/recipes/<recipe-id>/
+/es/tools/
+```
+
+## Important design choice
+
+The checklist is now a drawer, not a permanent right column. This avoids layout bugs across Docs, Recipes and Tools. The Recipes tab now points directly to the first real recipe page, while `/recipes/` renders that same first recipe instead of using a meta-refresh redirect.
