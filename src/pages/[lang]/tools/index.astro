@@ -18,12 +18,20 @@ const T = L.tools;
     <p>{T.intro}</p>
   </section>
 
+  <!-- ── Event Generator ── -->
   <section class="section">
-    <div class="kicker">Generator</div>
+    <div class="kicker">01 · Event</div>
     <h2>{T.generator}</h2>
     <p>{T.generatorHelp}</p>
 
     <form class="toolGrid" data-generator-form>
+      <div class="field">
+        <label>Event type</label>
+        <select name="eventType">
+          <option value="character_event">character_event — interactive</option>
+          <option value="hidden_setup">hidden_setup — anti-duplicate guard</option>
+        </select>
+      </div>
       <div class="field">
         <label>{T.namespace}</label>
         <input name="namespace" value="my_story" />
@@ -53,8 +61,78 @@ const T = L.tools;
 
     <div class="codewrap generated" data-generator-output>
       <div class="codeHeader">
-        <span class="codeTitle">generated event</span>
-        <button class="copyButton" type="button" data-copy-code>Copy</button>
+        <span class="codeTitle" data-output-title>character event</span>
+        <button class="copyButton" type="button" data-copy-code aria-label="Copy generated code">Copy</button>
+      </div>
+      <pre><code></code></pre>
+    </div>
+  </section>
+
+  <!-- ── Scripted Trigger Generator ── -->
+  <section class="section">
+    <div class="kicker">02 · Trigger</div>
+    <h2>Scripted Trigger</h2>
+    <p>Generates a reusable <code>scripted_trigger</code> — a named boolean condition you call anywhere with <code>my_trigger = yes</code>.</p>
+
+    <form class="toolGrid" data-trigger-form>
+      <div class="field">
+        <label>Trigger name</label>
+        <input name="triggerName" value="my_story_is_active" />
+      </div>
+      <div class="field">
+        <label>Variable flag</label>
+        <input name="varFlag" value="my_story_active" />
+      </div>
+      <div class="field">
+        <label>Scope alias (optional)</label>
+        <input name="scopeAlias" value="story_owner" placeholder="leave blank to omit" />
+      </div>
+      <div class="field">
+        <label>Extra condition (optional)</label>
+        <input name="extraCond" value="NOT = { has_trait = incapable }" placeholder="leave blank to omit" />
+      </div>
+      <button class="toolButton" type="submit">Generate trigger</button>
+    </form>
+
+    <div class="codewrap generated" data-trigger-output>
+      <div class="codeHeader">
+        <span class="codeTitle">scripted trigger</span>
+        <button class="copyButton" type="button" data-copy-code aria-label="Copy generated trigger">Copy</button>
+      </div>
+      <pre><code></code></pre>
+    </div>
+  </section>
+
+  <!-- ── Scripted Effect Generator ── -->
+  <section class="section">
+    <div class="kicker">03 · Effect</div>
+    <h2>Scripted Effect</h2>
+    <p>Generates a <code>scripted_effect</code> with an anti-duplicate guard via variable flag. Safe to fire multiple times — only runs once per character.</p>
+
+    <form class="toolGrid" data-effect-form>
+      <div class="field">
+        <label>Effect name</label>
+        <input name="effectName" value="my_story_start" />
+      </div>
+      <div class="field">
+        <label>Variable flag (guard)</label>
+        <input name="varFlag" value="my_story_active" />
+      </div>
+      <div class="field">
+        <label>Scope alias</label>
+        <input name="scopeAlias" value="story_owner" />
+      </div>
+      <div class="field">
+        <label>Effect content</label>
+        <input name="effectContent" value="start_story = my_namespace" />
+      </div>
+      <button class="toolButton" type="submit">Generate effect</button>
+    </form>
+
+    <div class="codewrap generated" data-effect-output>
+      <div class="codeHeader">
+        <span class="codeTitle">scripted effect</span>
+        <button class="copyButton" type="button" data-copy-code aria-label="Copy generated effect">Copy</button>
       </div>
       <pre><code></code></pre>
     </div>

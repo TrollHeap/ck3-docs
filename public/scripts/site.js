@@ -40,6 +40,7 @@ document.addEventListener("astro:page-load", () => {
   const setDrawer = (state) => {
     drawer?.classList.toggle("open", state);
     drawer?.setAttribute("aria-hidden", state ? "false" : "true");
+    open?.setAttribute("aria-expanded", state ? "true" : "false");
   };
 
   open?.addEventListener("click", () => setDrawer(true));

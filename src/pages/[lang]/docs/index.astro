@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../../../layouts/AppLayout.astro';
+import CodeBlock from '../../../components/CodeBlock.astro';
 import data from '../../../data/appData.json';
 
 export function getStaticPaths() {
@@ -22,7 +23,27 @@ const sidebarItems = L.docsSections.map((section) => ({ id: section.id, title: s
     <section class="section" id={section.id}>
       <div class="kicker">{section.kicker}</div>
       <h2>{section.title}</h2>
-      <div set:html={section.html}></div>
+      {section.html && <div class="prose" set:html={section.html} />}
+      {section.diagram && <div class="diagram">{section.diagram}</div>}
+      {section.code && (
+        <div class="codewrap">
+          <div class="codeHeader">
+            <span class="codeTitle">structure</span>
+            <button class="copyButton" type="button" data-copy-code>Copy</button>
+          </div>
+          <pre><code>{section.code}</code></pre>
+        </div>
+      )}
+      {section.snippet && (
+        <CodeBlock code={data.snippets[section.snippet] || ''} title={section.snippet} />
+      )}
+      {section.multiSnippets && (
+        <div class="multiCode">
+          {section.multiSnippets.map(([label, key]) => (
+            <CodeBlock code={data.snippets[key] || ''} title={label} />
+          ))}
+        </div>
+      )}
     </section>
   ))}
 </AppLayout>
