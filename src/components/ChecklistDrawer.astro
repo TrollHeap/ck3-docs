@@ -2,12 +2,18 @@
 const { items = [] } = Astro.props;
 ---
 
-<button class="checklistFab" type="button" data-checklist-open aria-label="Open debug checklist" aria-expanded="false" aria-controls="checklistDrawer">☑ Checklist</button>
+<div class="checklistBackdrop" data-checklist-backdrop aria-hidden="true"></div>
+
+<button class="checklistFab" type="button" data-checklist-open
+        aria-label="Open debug checklist" aria-expanded="false" aria-controls="checklistDrawer">
+  Checklist
+  <span class="checklistBadge" data-checklist-count aria-live="polite"></span>
+</button>
 
 <aside class="checklistDrawer" id="checklistDrawer" aria-hidden="true" aria-label="Debug checklist">
   <div class="drawerHeader">
     <h3>Checklist</h3>
-    <button class="themeToggle" type="button" data-checklist-close aria-label="Close checklist">×</button>
+    <button class="drawerClose" type="button" data-checklist-close aria-label="Close">×</button>
   </div>
   <div>
     {items.map((item, index) => (

@@ -15,7 +15,7 @@ const code = data.snippets[recipe.snippet] || '';
 ---
 
 <AppLayout lang={lang} active="recipes" title={`${L.recipesTitle} · ${L.brandTitle}`} recipeId={recipe.id}>
-  <section class="hero">
+  <section class="hero" transition:name="recipes-hero">
     <div class="kicker">{L.tabs.recipes}</div>
     <h2>{L.recipesTitle}</h2>
     <p>{L.recipesIntro}</p>
@@ -24,7 +24,7 @@ const code = data.snippets[recipe.snippet] || '';
   <div class="recipeWorkspace">
     <aside class="recipeIndex">
       {recipes.map((item) => (
-        <a class:list={['recipeListItem', { active: item.id === recipe.id }]} href={`./${item.id}/`}>
+        <a class:list={['recipeListItem', { active: item.id === recipe.id }]} href={`./${item.id}/`} data-astro-prefetch="hover">
           <span class="recipeListTitle">{item.title}</span>
           <span class="recipeTags">
             {item.tags.map((tag) => <span class="tag">{tag}</span>)}
@@ -33,7 +33,7 @@ const code = data.snippets[recipe.snippet] || '';
       ))}
     </aside>
 
-    <article class="recipeDetail">
+    <article class="recipeDetail" transition:name="recipe-detail">
       <header class="recipeHeader">
         <div class="kicker">Recipe</div>
         <h2>{recipe.title}</h2>

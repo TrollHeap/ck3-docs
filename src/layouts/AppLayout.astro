@@ -94,6 +94,12 @@ function languageTarget(nextLang) {
 
     <ChecklistDrawer items={L.checklist} />
 
+    <nav class="mobileNav" aria-label="Main navigation">
+      <a class:list={['mobileTab', { active: active === 'docs' }]} href={langPath(lang, 'docs')} aria-current={active === 'docs' ? 'page' : undefined}>{L.tabs.docs}</a>
+      <a class:list={['mobileTab', { active: active === 'recipes' }]} href={recipeHome(lang)} aria-current={active === 'recipes' ? 'page' : undefined}>{L.tabs.recipes}</a>
+      <a class:list={['mobileTab', { active: active === 'tools' }]} href={langPath(lang, 'tools')} aria-current={active === 'tools' ? 'page' : undefined}>{L.tabs.tools}</a>
+    </nav>
+
     <script src={`${import.meta.env.BASE_URL}scripts/site.js`} defer></script>
   </body>
 </html>
