@@ -1,0 +1,20 @@
+---
+const { items = [] } = Astro.props;
+---
+
+<button class="checklistFab" type="button" data-checklist-open>☑ Checklist</button>
+
+<aside class="checklistDrawer" id="checklistDrawer" aria-hidden="true">
+  <div class="drawerHeader">
+    <h3>Checklist</h3>
+    <button class="themeToggle" type="button" data-checklist-close>×</button>
+  </div>
+  <div>
+    {items.map((item, index) => (
+      <label class="check">
+        <input type="checkbox" data-check-item={index} />
+        <span>{item}</span>
+      </label>
+    ))}
+  </div>
+</aside>

@@ -1,0 +1,28 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import data from '../../../data/appData.json';
+
+export function getStaticPaths() {
+  return Object.keys(data.i18n).map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+const L = data.i18n[lang] || data.i18n.en;
+const sidebarItems = L.docsSections.map((section) => ({ id: section.id, title: section.title }));
+---
+
+<AppLayout lang={lang} active="docs" title={L.metaTitle} sidebarItems={sidebarItems}>
+  <section class="hero">
+    <div class="kicker">{L.heroEyebrow}</div>
+    <h2>{L.heroTitle}</h2>
+    <p>{L.heroText}</p>
+  </section>
+
+  {L.docsSections.map((section) => (
+    <section class="section" id={section.id}>
+      <div class="kicker">{section.kicker}</div>
+      <h2>{section.title}</h2>
+      <div set:html={section.html}></div>
+    </section>
+  ))}
+</AppLayout>

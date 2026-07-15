@@ -1,0 +1,930 @@
+{
+  "snippets": {
+    "campaign": "namespace = my_story\n\n# Hidden campaign setup\nmy_story.0001 = {\n  scope = none\n  hidden = yes\n\n  trigger = {\n    current_date >= 600.1.1\n    my_story_started_trigger = no\n  }\n\n  immediate = {\n    add_to_global_variable_list = {\n      name = my_events_happened\n      target = flag:my_story_started\n    }\n\n    debug_log = \"my_story.0001 — campaign started\"\n    debug_log_date = yes\n\n    title:e_my_realm.holder = {\n      create_story = story_my_campaign\n      save_scope_as = story_owner\n    }\n  }\n}",
+    "actor": "# Find existing actor or create fallback\nimmediate = {\n  if = {\n    limit = { character:12345 ?= { is_alive = yes } }\n    character:12345 = { save_scope_as = important_actor }\n  }\n  else = {\n    create_character = {\n      template = bp1_yearly_2021_intrigue_person_template\n      location = root.location\n      after_creation = {\n        save_scope_as = important_actor\n        set_employer = root\n      }\n    }\n  }\n\n  scope:story = {\n    set_variable = {\n      name = important_actor\n      value = scope:important_actor\n    }\n  }\n}",
+    "mission": "# Send an agent to a target. Fire event on arrival.\nscope:agent = {\n  start_travel_plan = {\n    destination = scope:story.var:first_target.capital_province\n    return_trip = no\n    on_arrival_event = my_story.2000\n  }\n}",
+    "infiltration": "my_story.2000 = {\n  type = character_event\n  hidden = yes\n  cooldown = { days = 90 }\n\n  trigger = {\n    exists = scope:story.var:agent\n    exists = scope:story.var:first_target\n    scope:story.var:agent = { is_alive = yes }\n  }\n\n  immediate = {\n    scope:story.var:first_target = { save_scope_as = target_ruler }\n    scope:story.var:agent = { save_scope_as = agent }\n\n    if = {\n      limit = { exists = cp:councillor_spymaster }\n      cp:councillor_spymaster = { save_scope_as = spymaster }\n\n      scope:agent = {\n        duel = {\n          skill = intrigue\n          target = scope:spymaster\n\n          20 = {\n            compare_modifier = { value = scope:duel_value multiplier = -5 }\n            scope:target_ruler = {\n              hard_imprison_character_effect = {\n                TARGET = scope:agent\n                IMPRISONER = this\n              }\n              trigger_event = { id = my_story.2001 days = 5 }\n            }\n          }\n\n          80 = {\n            compare_modifier = { value = scope:duel_value multiplier = 5 }\n            scope:story = { set_variable = { name = infiltration_success value = yes } }\n          }\n        }\n      }\n    }\n  }\n}",
+    "cooldown": "my_story.2010 = {\n  type = character_event\n  hidden = yes\n  cooldown = { days = 1800 }\n\n  trigger = {\n    exists = scope:story.var:investigator\n    exists = scope:story.var:suspect\n    scope:story.var:suspect = { is_alive = yes }\n  }\n\n  on_trigger_fail = {\n    trigger_event = { id = my_story.2012 days = 2 }\n  }\n\n  immediate = {\n    scope:story.var:investigator = { save_scope_as = investigator }\n    scope:story.var:suspect = { save_scope_as = suspect }\n    trigger_event = my_story.2011\n  }\n}",
+    "ending": "option = { # Canon resolution\n  name = my_story.3000.a\n  following_lore_path_effect = yes\n  scope:key_actor = { add_character_modifier = { modifier = canon_burden years = 5 } }\n}\n\noption = { # Non-canon divergence\n  name = my_story.3000.b\n  following_alternate_path_effect = yes\n  scope:key_actor = { add_character_flag = survived_non_canon_path }\n}",
+    "transfer": "option = {\n  name = my_story.4000.a\n  trigger = {\n    scope:new_player_character = {\n      is_alive = yes\n      is_playable_character = yes\n      is_ai = yes\n    }\n  }\n\n  show_as_tooltip = {\n    set_player_character = scope:new_player_character\n  }\n\n  hidden_effect = {\n    set_player_character = scope:new_player_character\n  }\n}",
+    "crisis": "# Main crisis event\noption = {\n  name = my_story.5000.a\n  declare_war_on_target_effect = yes\n\n  every_ruler = {\n    if = {\n      limit = { is_at_same_location = scope:crisis_owner }\n      trigger_event = my_story.5001\n    }\n    else_if = {\n      limit = { location = { geographical_region = world_eastern_kingdoms } }\n      trigger_event = my_story.5002\n    }\n  }\n\n  scope:target_ruler = {\n    trigger_event = my_story.5003\n    every_vassal_or_below = { trigger_event = my_story.5003 }\n  }\n}",
+    "event": "my_story.1001 = {\n  type = character_event\n  title = my_story.1001.title\n  desc = my_story.1001.desc\n  theme = intrigue\n\n  trigger = {\n    exists = scope:story\n    exists = scope:story.story_owner\n  }\n\n  immediate = {\n    scope:story.story_owner = { save_scope_as = story_owner }\n  }\n\n  option = {\n    name = my_story.1001.a\n    following_lore_path_effect = yes\n  }\n\n  option = {\n    name = my_story.1001.b\n    following_alternate_path_effect = yes\n  }\n}",
+    "registry": "scope:story = {\n  set_variable = {\n    name = important_actor\n    value = root\n  }\n}\n\n# Later:\ntrigger = { exists = scope:story.var:important_actor }\nscope:story.var:important_actor = { save_scope_as = important_actor }",
+    "directwar": "scope:attacker = {\n  start_war = {\n    casus_belli = independence_war\n    target = scope:defender\n  }\n}",
+    "factionwar": "scope:actor = {\n  create_faction = {\n    type = independence_faction\n    target = scope:liege\n  }\n}",
+    "artifact": "# Store and transfer an artifact safely\nscope:old_owner = {\n  every_character_artifact = {\n    limit = { has_variable = frostmourne }\n    save_scope_as = key_artifact\n  }\n}\n\nif = {\n  limit = { exists = scope:key_artifact }\n  scope:key_artifact = { set_owner = scope:new_owner }\n}",
+    "stage": "scope:story = {\n  set_variable = {\n    name = story_stage\n    value = 2\n  }\n}",
+    "antifarm": "if = {\n  limit = { NOT = { has_character_flag = reward_already_given } }\n  following_alternate_path_effect = yes\n  add_character_flag = reward_already_given\n}"
+  },
+  "i18n": {
+    "en": {
+      "metaTitle": "CK3 Scenario Modding — Utility Docs",
+      "brandTitle": "CK3 Scenario Docs",
+      "brandSub": "Utility guide + recipe library",
+      "tabs": {
+        "docs": "Docs",
+        "recipes": "Recipes",
+        "tools": "Tools"
+      },
+      "search": "Search: / then scope, war, actor…",
+      "theme": "Toggle light/dark",
+      "expand": "Show all",
+      "copy": "Copy",
+      "copied": "Copied",
+      "heroEyebrow": "Production-oriented modding",
+      "heroTitle": "Build CK3 narrative scenarios with reusable, team-friendly patterns.",
+      "heroText": "A practical side-by-side reference for modders: architecture, story cycles, reusable snippets, recipe templates, debugging patterns and concrete Warcraft-style examples.",
+      "quick": [
+        [
+          "Complete campaign",
+          "story owner + registry",
+          "#recipe-campaign"
+        ],
+        [
+          "Agent mission",
+          "travel + arrival",
+          "#recipe-agent"
+        ],
+        [
+          "Infiltration",
+          "cooldown + duel",
+          "#recipe-infiltration"
+        ],
+        [
+          "Fast debug",
+          "symptom → cause",
+          "#debug"
+        ]
+      ],
+      "docsSections": [
+        {
+          "id": "core-patterns",
+          "title": "1. Core workflow: what you use constantly",
+          "kicker": "Fast workflow",
+          "keywords": "core workflow priority prototype scenario active backlog",
+          "html": "<div class='grid three'><div class='card'><h3>1 central actor</h3><p>Every campaign needs a <strong>story_owner</strong>. Everyone else orbits around that character.</p></div><div class='card'><h3>1 persistent state</h3><p>Store important actors and targets in <code>scope:story.var:*</code>, not in temporary scopes only.</p></div><div class='card'><h3>1 strong consequence</h3><p>Each major option should clearly do one thing: war, artifact, travel, scheme, death, conversion.</p></div></div><div class='callout warn'>Team rule: add one mechanic, test it in-game, check <code>error.log</code>, then add the next mechanic.</div>"
+        },
+        {
+          "id": "architecture",
+          "title": "2. File architecture",
+          "kicker": "Structure",
+          "keywords": "architecture folders events scripted effects triggers localization modifiers",
+          "html": "<p>The minimum clean structure is: events, scripted effects, scripted triggers and localization. Add more folders only when the mechanic exists.</p>",
+          "code": "events/\n  my_story_events.txt\n\ncommon/scripted_effects/\n  my_story_effects.txt\n\ncommon/scripted_triggers/\n  my_story_triggers.txt\n\nlocalization/english/\n  my_story_l_english.yml"
+        },
+        {
+          "id": "schema",
+          "title": "3. Global scenario flow",
+          "kicker": "Mental map",
+          "keywords": "schema diagram flow scenario narrative pipeline",
+          "diagram": "SETUP HIDDEN\n  ↓ create story + owner + global flags\nINTRO VISIBLE\n  ↓ present the conflict\nMAJOR CHOICE\n  ├─ canon path → rewards + story stage\n  └─ alternate path → flags + risks + new events\nCYCLE\n  ↓ cooldown / travel / infiltration / investigation\nRESOLUTION\n  ├─ canon ending\n  └─ non-canon divergence"
+        },
+        {
+          "id": "event",
+          "title": "4. Event lifecycle",
+          "kicker": "Core pattern",
+          "keywords": "event lifecycle immediate option after hidden trigger_event days",
+          "html": "<div class='grid three'><div class='card'><h3><code>trigger</code></h3><p>Existence conditions. Do not open an event if the key actor is dead or missing.</p></div><div class='card'><h3><code>immediate</code></h3><p>Prepare scopes, variables, lookups and tooltips. Avoid irreversible consequences here.</p></div><div class='card'><h3><code>option</code></h3><p>Apply what the player or AI actually chooses.</p></div></div>",
+          "snippet": "event"
+        },
+        {
+          "id": "scopes",
+          "title": "5. Scopes: the center of debugging",
+          "kicker": "Reliability",
+          "keywords": "scope root this save_scope_as delayed event actor artifact",
+          "html": "<p>Long scenarios usually break because a scope no longer exists. Use temporary scopes for the current chain, and story variables for long-running state.</p><div class='grid two'><div class='card'><h3>Temporary</h3><p><code>save_scope_as</code> is good inside the current event chain. It is fragile after delayed events.</p></div><div class='card'><h3>Persistent</h3><p><code>scope:story.var:actor</code> is safer for cycles, travel, delayed triggers and fallback events.</p></div></div>",
+          "snippet": "registry"
+        },
+        {
+          "id": "state",
+          "title": "6. Story state",
+          "kicker": "State machine",
+          "keywords": "story state machine stage variable flag canon alternate",
+          "html": "<p>Use a numeric stage for linear progression and flags for boolean states. Add anti-farm flags to alternate rewards.</p>",
+          "multiSnippets": [
+            [
+              "Stage",
+              "stage"
+            ],
+            [
+              "Anti-farm flag",
+              "antifarm"
+            ]
+          ]
+        },
+        {
+          "id": "story-cycle",
+          "title": "7. Story cycles: reusable living scenarios",
+          "kicker": "Living campaign",
+          "keywords": "story cycle story owner create_story variable cooldown on_trigger_fail recurring",
+          "html": "<p>The strongest model is: hidden setup creates the story, the owner carries the campaign, actors are registered, then cycles trigger missions, investigations and resolutions.</p><div class='grid two'><div class='card'><h3>Copy this</h3><ul><li><code>create_story</code> in hidden setup.</li><li><code>debug_log</code> at startup.</li><li><code>scope:story.var:*</code> for actors.</li><li><code>cooldown</code> for loops.</li><li><code>on_trigger_fail</code> for safe fallback.</li></ul></div><div class='card'><h3>Avoid this</h3><ul><li>Hardcoding the same character everywhere.</li><li>Restarting loops without cooldown or flags.</li><li>Putting choice consequences in <code>immediate</code>.</li><li>Creating a campaign with no resolution.</li></ul></div></div>",
+          "diagram": "create_story\n  ↓\nstory_owner\n  ↓\nscope:story.var:actor_A / actor_B / target\n  ↓\nmission event / cooldown event / travel event\n  ↓\ncanon path OR alternate path\n  ↓\nresolution OR fallback"
+        },
+        {
+          "id": "war",
+          "title": "8. Direct war or faction?",
+          "kicker": "War logic",
+          "keywords": "war casus belli cb independence_war independence_faction_war faction start_war",
+          "html": "<div class='grid two'><div class='card'><h3>Direct war</h3><p>A character attacks now. Use an individual CB that validates attacker and defender.</p></div><div class='card'><h3>Faction</h3><p>Political pressure builds first. The war comes from the faction system.</p></div></div>",
+          "multiSnippets": [
+            [
+              "Direct war",
+              "directwar"
+            ],
+            [
+              "Faction pressure",
+              "factionwar"
+            ]
+          ]
+        },
+        {
+          "id": "artifacts",
+          "title": "9. Artifacts and unique objects",
+          "kicker": "Ownership",
+          "keywords": "artifact frostmourne owner claim set_owner variable",
+          "html": "<p>Never assume the artifact still belongs to the expected character. Search it, verify it exists, then transfer or claim it.</p>",
+          "snippet": "artifact"
+        },
+        {
+          "id": "debug",
+          "title": "10. Debug matrix",
+          "kicker": "Symptom → cause",
+          "keywords": "debug error log symptom cause scope war event loop",
+          "html": "<div class='grid two'><div class='card'><h3>Event does not fire</h3><p>Check <code>trigger</code>, missing story scope, missing actor, wrong receiver.</p></div><div class='card'><h3>War does not start</h3><p>Wrong CB, invalid liege relation, unlanded attacker, target not valid.</p></div><div class='card'><h3>Loop repeats forever</h3><p>Missing <code>cooldown</code>, missing flag, no terminal state.</p></div><div class='card'><h3>Text shows wrong variant</h3><p>Bad <code>first_valid</code> order or trigger too broad.</p></div></div>"
+        }
+      ],
+      "recipesTitle": "Recipe library",
+      "recipesIntro": "Copy one recipe, adapt the names, and test it alone. These are production patterns, not personal notes.",
+      "recipes": [
+        {
+          "id": "recipe-campaign",
+          "title": "Create a complete story campaign",
+          "tags": [
+            "create_story",
+            "story_owner",
+            "registry"
+          ],
+          "diagram": "hidden setup → create_story → story_owner → register actors → launch intro",
+          "steps": [
+            "Use a hidden setup event with a trigger and anti-duplicate flag.",
+            "Create the story on the campaign owner.",
+            "Immediately register the owner and key actors.",
+            "Fire the first visible event only after setup is valid."
+          ],
+          "snippet": "campaign"
+        },
+        {
+          "id": "recipe-actor",
+          "title": "Create or retrieve an important actor",
+          "tags": [
+            "actor",
+            "fallback",
+            "story var"
+          ],
+          "diagram": "known character? → yes: save scope → no: create character → store in story",
+          "steps": [
+            "Try to retrieve the historical/lore actor first.",
+            "If missing or dead, create a fallback actor.",
+            "Store the result in <code>scope:story.var:actor</code>.",
+            "Use the story variable later instead of hardcoding again."
+          ],
+          "snippet": "actor"
+        },
+        {
+          "id": "recipe-agent",
+          "title": "Send an agent on a mission",
+          "tags": [
+            "travel",
+            "arrival",
+            "mission"
+          ],
+          "diagram": "agent selected → target stored → start_travel_plan → on_arrival_event",
+          "steps": [
+            "Store the target in the story before travel starts.",
+            "Use <code>start_travel_plan</code> on the agent.",
+            "Use <code>on_arrival_event</code> for the actual mission result.",
+            "Do not resolve the mission before the agent arrives."
+          ],
+          "snippet": "mission"
+        },
+        {
+          "id": "recipe-infiltration",
+          "title": "Build an infiltration cycle",
+          "tags": [
+            "cooldown",
+            "duel",
+            "spymaster"
+          ],
+          "diagram": "cooldown check → validate target → duel intrigue → caught OR success",
+          "steps": [
+            "Add a cooldown so the cycle cannot spam.",
+            "Validate agent, target and spymaster.",
+            "Use <code>duel</code> with the relevant skill.",
+            "On failure, imprison or expose the agent; on success, update story state."
+          ],
+          "snippet": "infiltration"
+        },
+        {
+          "id": "recipe-investigation",
+          "title": "Create an investigation with cooldown",
+          "tags": [
+            "investigation",
+            "cooldown",
+            "fallback"
+          ],
+          "diagram": "hidden probe → cooldown → visible choice → success / delayed retry / fallback",
+          "steps": [
+            "Use a hidden setup event for the probe.",
+            "Add a long cooldown to prevent spam.",
+            "If the trigger fails, route to a fallback event.",
+            "Use flags to prevent reward farming."
+          ],
+          "snippet": "cooldown"
+        },
+        {
+          "id": "recipe-ending",
+          "title": "Create canon / non-canon endings",
+          "tags": [
+            "canon",
+            "alternate",
+            "resolution"
+          ],
+          "diagram": "final event → canon ending OR alternate survival/divergence",
+          "steps": [
+            "Make the canon path the expected AI path.",
+            "Make alternate endings explicit and flagged.",
+            "Reward both, but not equally: canon can reward continuity, alternate rewards risk.",
+            "End or redirect the story after resolution."
+          ],
+          "snippet": "ending"
+        },
+        {
+          "id": "recipe-transfer",
+          "title": "Transfer the player after a death or collapse",
+          "tags": [
+            "player",
+            "succession",
+            "set_player_character"
+          ],
+          "diagram": "old character dies → choose valid successor → set_player_character",
+          "steps": [
+            "Check that the new character exists, is alive and playable.",
+            "Use a visible option if the player is involved.",
+            "Use <code>show_as_tooltip</code> to explain the transfer.",
+            "Use hidden effect only after the option is chosen."
+          ],
+          "snippet": "transfer"
+        },
+        {
+          "id": "recipe-crisis",
+          "title": "Create a global crisis with regional notifications",
+          "tags": [
+            "crisis",
+            "notifications",
+            "every_ruler"
+          ],
+          "diagram": "crisis starts → main effect → local notifications → target notifications → regional reactions",
+          "steps": [
+            "Apply the main crisis effect once.",
+            "Notify nearby rulers differently from distant rulers.",
+            "Notify the target realm and vassals directly.",
+            "Use regional checks to keep performance and relevance sane."
+          ],
+          "snippet": "crisis"
+        }
+      ],
+      "tools": {
+        "title": "Tools",
+        "intro": "Small utilities for side-by-side coding.",
+        "generator": "Event generator",
+        "generatorHelp": "Fill the fields, generate a skeleton, then paste it into your event file.",
+        "namespace": "Namespace",
+        "eventId": "Event ID",
+        "effect": "Major effect",
+        "receiver": "Receiver scope",
+        "target": "Target scope",
+        "cb": "Casus belli",
+        "generate": "Generate skeleton",
+        "checklist": "Persistent checklist",
+        "links": "Useful links",
+        "footer": "Single-file static documentation. No framework, no build step."
+      },
+      "checklist": [
+        "Story owner exists",
+        "Key actors stored in scope:story.var:*",
+        "Every delayed event has required scopes",
+        "Major option has one clear consequence",
+        "CB validates attacker and defender",
+        "Cooldown or flag prevents loops",
+        "Fallback exists for dead/missing actors",
+        "error.log checked after the test"
+      ]
+    },
+    "fr": {
+      "metaTitle": "CK3 Scenario Modding — Documentation utilitaire",
+      "brandTitle": "Docs Scénarios CK3",
+      "brandSub": "Guide utilitaire + bibliothèque",
+      "tabs": {
+        "docs": "Docs",
+        "recipes": "Recettes",
+        "tools": "Outils"
+      },
+      "search": "Rechercher : / puis scope, guerre, acteur…",
+      "theme": "Basculer clair/sombre",
+      "expand": "Tout afficher",
+      "copy": "Copier",
+      "copied": "Copié",
+      "heroEyebrow": "Modding orienté production",
+      "heroTitle": "Construire des scénarios narratifs CK3 avec des patterns réutilisables et partageables.",
+      "heroText": "Référence pratique à garder à côté de l’éditeur : architecture, story cycles, snippets réutilisables, recettes, debug et exemples concrets façon Warcraft.",
+      "quick": [
+        [
+          "Campagne complète",
+          "story owner + registry",
+          "#recipe-campaign"
+        ],
+        [
+          "Agent en mission",
+          "voyage + arrivée",
+          "#recipe-agent"
+        ],
+        [
+          "Infiltration",
+          "cooldown + duel",
+          "#recipe-infiltration"
+        ],
+        [
+          "Debug rapide",
+          "symptôme → cause",
+          "#debug"
+        ]
+      ],
+      "docsSections": [
+        {
+          "id": "core-patterns",
+          "title": "1. Flux de travail principal",
+          "kicker": "Workflow rapide",
+          "keywords": "workflow principal priorite prototype scenario backlog",
+          "html": "<div class='grid three'><div class='card'><h3>1 acteur central</h3><p>Chaque campagne a besoin d’un <strong>story_owner</strong>. Les autres personnages gravitent autour de lui.</p></div><div class='card'><h3>1 état persistant</h3><p>Stocke les acteurs et cibles importants dans <code>scope:story.var:*</code>, pas uniquement dans des scopes temporaires.</p></div><div class='card'><h3>1 conséquence forte</h3><p>Chaque option majeure doit faire clairement une chose : guerre, artefact, voyage, scheme, mort, conversion.</p></div></div><div class='callout warn'>Règle d’équipe : ajoute une mécanique, teste-la en jeu, vérifie <code>error.log</code>, puis ajoute la suivante.</div>"
+        },
+        {
+          "id": "architecture",
+          "title": "2. Architecture de fichiers",
+          "kicker": "Structure",
+          "keywords": "architecture folders events scripted effects triggers localization modifiers",
+          "html": "<p>La structure minimale propre : events, scripted effects, scripted triggers et localisation. Ajoute d’autres dossiers seulement quand la mécanique existe.</p>",
+          "code": "events/\n  my_story_events.txt\n\ncommon/scripted_effects/\n  my_story_effects.txt\n\ncommon/scripted_triggers/\n  my_story_triggers.txt\n\nlocalization/english/\n  my_story_l_english.yml"
+        },
+        {
+          "id": "schema",
+          "title": "3. Flux global d’un scénario",
+          "kicker": "Carte mentale",
+          "keywords": "schema diagram flow scenario narrative pipeline",
+          "diagram": "SETUP HIDDEN\n  ↓ crée story + owner + flags globaux\nINTRO VISIBLE\n  ↓ présente le conflit\nCHOIX MAJEUR\n  ├─ voie canonique → récompenses + story stage\n  └─ voie alternative → flags + risques + nouveaux events\nCYCLE\n  ↓ cooldown / voyage / infiltration / enquête\nRÉSOLUTION\n  ├─ fin canonique\n  └─ divergence non-canon"
+        },
+        {
+          "id": "event",
+          "title": "4. Cycle de vie d’un event",
+          "kicker": "Pattern central",
+          "keywords": "event lifecycle immediate option after hidden trigger_event days",
+          "html": "<div class='grid three'><div class='card'><h3><code>trigger</code></h3><p>Conditions d’existence. Ne lance pas un event si l’acteur clé est mort ou manquant.</p></div><div class='card'><h3><code>immediate</code></h3><p>Prépare scopes, variables, recherches et tooltips. Évite les conséquences irréversibles ici.</p></div><div class='card'><h3><code>option</code></h3><p>Applique ce que le joueur ou l’IA choisit réellement.</p></div></div>",
+          "snippet": "event"
+        },
+        {
+          "id": "scopes",
+          "title": "5. Scopes : le centre du debug",
+          "kicker": "Fiabilité",
+          "keywords": "scope root this save_scope_as delayed event actor artifact",
+          "html": "<p>Les scénarios longs cassent surtout parce qu’un scope n’existe plus. Utilise les scopes temporaires pour la chaîne actuelle, et les variables de story pour l’état long.</p><div class='grid two'><div class='card'><h3>Temporaire</h3><p><code>save_scope_as</code> est bon dans la chaîne courante. Fragile après un event différé.</p></div><div class='card'><h3>Persistant</h3><p><code>scope:story.var:actor</code> est plus sûr pour cycles, voyages, triggers différés et fallbacks.</p></div></div>",
+          "snippet": "registry"
+        },
+        {
+          "id": "state",
+          "title": "6. État de story",
+          "kicker": "State machine",
+          "keywords": "story state machine stage variable flag canon alternate",
+          "html": "<p>Utilise un stage numérique pour la progression linéaire et des flags pour les états booléens. Ajoute des flags anti-farm aux récompenses alternatives.</p>",
+          "multiSnippets": [
+            [
+              "Stage",
+              "stage"
+            ],
+            [
+              "Flag anti-farm",
+              "antifarm"
+            ]
+          ]
+        },
+        {
+          "id": "story-cycle",
+          "title": "7. Story cycles : scénarios vivants réutilisables",
+          "kicker": "Campagne vivante",
+          "keywords": "story cycle story owner create_story variable cooldown on_trigger_fail recurring",
+          "html": "<p>Le modèle le plus solide : un setup hidden crée la story, l’owner porte la campagne, les acteurs sont enregistrés, puis des cycles déclenchent missions, enquêtes et résolutions.</p><div class='grid two'><div class='card'><h3>À copier</h3><ul><li><code>create_story</code> dans un setup hidden.</li><li><code>debug_log</code> au démarrage.</li><li><code>scope:story.var:*</code> pour les acteurs.</li><li><code>cooldown</code> pour les boucles.</li><li><code>on_trigger_fail</code> pour les fallbacks sûrs.</li></ul></div><div class='card'><h3>À éviter</h3><ul><li>Hardcoder partout le même personnage.</li><li>Relancer des boucles sans cooldown ou flags.</li><li>Mettre les conséquences de choix dans <code>immediate</code>.</li><li>Créer une campagne sans résolution.</li></ul></div></div>",
+          "diagram": "create_story\n  ↓\nstory_owner\n  ↓\nscope:story.var:actor_A / actor_B / target\n  ↓\nmission event / cooldown event / travel event\n  ↓\nvoie canonique OU voie alternative\n  ↓\nrésolution OU fallback"
+        },
+        {
+          "id": "war",
+          "title": "8. Guerre directe ou faction ?",
+          "kicker": "Logique de guerre",
+          "keywords": "war casus belli cb independence_war independence_faction_war faction start_war",
+          "html": "<div class='grid two'><div class='card'><h3>Guerre directe</h3><p>Un personnage attaque maintenant. Utilise un CB individuel qui valide attaquant et défenseur.</p></div><div class='card'><h3>Faction</h3><p>La pression politique monte d’abord. La guerre vient du système de faction.</p></div></div>",
+          "multiSnippets": [
+            [
+              "Direct war",
+              "directwar"
+            ],
+            [
+              "Faction pressure",
+              "factionwar"
+            ]
+          ]
+        },
+        {
+          "id": "artifacts",
+          "title": "9. Artefacts et objets uniques",
+          "kicker": "Possession",
+          "keywords": "artifact frostmourne owner claim set_owner variable",
+          "html": "<p>Ne suppose jamais que l’artefact appartient encore au bon personnage. Recherche-le, vérifie son existence, puis transfère-le ou ajoute une claim.</p>",
+          "snippet": "artifact"
+        },
+        {
+          "id": "debug",
+          "title": "10. Matrice de debug",
+          "kicker": "Symptôme → cause",
+          "keywords": "debug error log symptom cause scope war event loop",
+          "html": "<div class='grid two'><div class='card'><h3>L’event ne se lance pas</h3><p>Vérifie <code>trigger</code>, story scope absent, acteur manquant, mauvais receiver.</p></div><div class='card'><h3>La guerre ne démarre pas</h3><p>Mauvais CB, relation de liege invalide, attaquant non landed, cible invalide.</p></div><div class='card'><h3>La boucle se répète</h3><p>Cooldown manquant, flag manquant, aucun état terminal.</p></div><div class='card'><h3>Mauvaise variante de texte</h3><p>Ordre <code>first_valid</code> mauvais ou trigger trop large.</p></div></div>"
+        }
+      ],
+      "recipesTitle": "Bibliothèque de recettes",
+      "recipesIntro": "Copie une recette, adapte les noms, puis teste-la seule. Ce sont des patterns de production, pas des notes personnelles.",
+      "recipes": [
+        {
+          "id": "recipe-campaign",
+          "title": "Créer une story campaign complète",
+          "tags": [
+            "create_story",
+            "story_owner",
+            "registry"
+          ],
+          "diagram": "hidden setup → create_story → story_owner → register actors → launch intro",
+          "steps": [
+            "Utilise un setup hidden avec trigger et flag anti-duplication.",
+            "Crée la story sur le propriétaire de campagne.",
+            "Enregistre immédiatement l’owner et les acteurs clés.",
+            "Lance le premier event visible seulement après validation du setup."
+          ],
+          "snippet": "campaign"
+        },
+        {
+          "id": "recipe-actor",
+          "title": "Créer ou retrouver un acteur important",
+          "tags": [
+            "actor",
+            "fallback",
+            "story var"
+          ],
+          "diagram": "known character? → yes: save scope → no: create character → store in story",
+          "steps": [
+            "Tente d’abord de récupérer l’acteur historique/lore.",
+            "S’il manque ou est mort, crée un acteur fallback.",
+            "Stocke le résultat dans <code>scope:story.var:actor</code>.",
+            "Réutilise la variable de story au lieu de hardcoder."
+          ],
+          "snippet": "actor"
+        },
+        {
+          "id": "recipe-agent",
+          "title": "Envoyer un agent en mission",
+          "tags": [
+            "travel",
+            "arrival",
+            "mission"
+          ],
+          "diagram": "agent selected → target stored → start_travel_plan → on_arrival_event",
+          "steps": [
+            "Stocke la cible dans la story avant le voyage.",
+            "Utilise <code>start_travel_plan</code> sur l’agent.",
+            "Utilise <code>on_arrival_event</code> pour résoudre la mission.",
+            "Ne résous pas la mission avant l’arrivée."
+          ],
+          "snippet": "mission"
+        },
+        {
+          "id": "recipe-infiltration",
+          "title": "Construire un cycle d’infiltration",
+          "tags": [
+            "cooldown",
+            "duel",
+            "spymaster"
+          ],
+          "diagram": "cooldown check → validate target → duel intrigue → caught OR success",
+          "steps": [
+            "Ajoute un cooldown pour éviter le spam.",
+            "Valide agent, cible et spymaster.",
+            "Utilise <code>duel</code> avec la compétence pertinente.",
+            "En échec, emprisonne/expose l’agent ; en succès, mets à jour la story."
+          ],
+          "snippet": "infiltration"
+        },
+        {
+          "id": "recipe-investigation",
+          "title": "Créer une enquête avec cooldown",
+          "tags": [
+            "investigation",
+            "cooldown",
+            "fallback"
+          ],
+          "diagram": "hidden probe → cooldown → visible choice → success / delayed retry / fallback",
+          "steps": [
+            "Utilise un setup hidden pour l’enquête.",
+            "Ajoute un long cooldown.",
+            "Si le trigger échoue, route vers un fallback.",
+            "Utilise des flags pour empêcher le farm."
+          ],
+          "snippet": "cooldown"
+        },
+        {
+          "id": "recipe-ending",
+          "title": "Créer des fins canon / non-canon",
+          "tags": [
+            "canon",
+            "alternate",
+            "resolution"
+          ],
+          "diagram": "final event → canon ending OR alternate survival/divergence",
+          "steps": [
+            "Fais de la voie canonique la voie IA attendue.",
+            "Rends les fins alternatives explicites et flaggées.",
+            "Récompense les deux, mais différemment.",
+            "Termine ou redirige la story après résolution."
+          ],
+          "snippet": "ending"
+        },
+        {
+          "id": "recipe-transfer",
+          "title": "Transférer le joueur après une mort ou un effondrement",
+          "tags": [
+            "player",
+            "succession",
+            "set_player_character"
+          ],
+          "diagram": "old character dies → choose valid successor → set_player_character",
+          "steps": [
+            "Vérifie que le nouveau personnage existe, est vivant et jouable.",
+            "Utilise une option visible si le joueur est concerné.",
+            "Utilise <code>show_as_tooltip</code> pour expliquer le transfert.",
+            "Applique l’effet caché seulement après le choix."
+          ],
+          "snippet": "transfer"
+        },
+        {
+          "id": "recipe-crisis",
+          "title": "Créer une crise mondiale avec notifications régionales",
+          "tags": [
+            "crisis",
+            "notifications",
+            "every_ruler"
+          ],
+          "diagram": "crisis starts → main effect → local notifications → target notifications → regional reactions",
+          "steps": [
+            "Applique l’effet principal une seule fois.",
+            "Notifie différemment les souverains proches et lointains.",
+            "Notifie directement la cible et ses vassaux.",
+            "Utilise les régions pour garder pertinence et performance."
+          ],
+          "snippet": "crisis"
+        }
+      ],
+      "tools": {
+        "title": "Outils",
+        "intro": "Petits outils pour coder côte à côte.",
+        "generator": "Générateur d’event",
+        "generatorHelp": "Remplis les champs, génère un squelette, puis colle-le dans ton fichier event.",
+        "namespace": "Namespace",
+        "eventId": "Event ID",
+        "effect": "Effet majeur",
+        "receiver": "Scope receveur",
+        "target": "Scope cible",
+        "cb": "Casus belli",
+        "generate": "Générer le squelette",
+        "checklist": "Checklist persistante",
+        "links": "Liens utiles",
+        "footer": "Documentation statique en un seul fichier. Aucun framework, aucun build."
+      },
+      "checklist": [
+        "Le story owner existe",
+        "Les acteurs clés sont stockés dans scope:story.var:*",
+        "Chaque event différé a ses scopes nécessaires",
+        "Chaque option majeure a une conséquence claire",
+        "Le CB valide attaquant et défenseur",
+        "Cooldown ou flag empêche les boucles",
+        "Fallback prévu si acteur mort/manquant",
+        "error.log vérifié après le test"
+      ]
+    },
+    "es": {
+      "metaTitle": "CK3 Scenario Modding — Documentación útil",
+      "brandTitle": "Docs Escenarios CK3",
+      "brandSub": "Guía práctica + biblioteca",
+      "tabs": {
+        "docs": "Docs",
+        "recipes": "Recetas",
+        "tools": "Herramientas"
+      },
+      "search": "Buscar: / y luego scope, guerra, actor…",
+      "theme": "Cambiar claro/oscuro",
+      "expand": "Mostrar todo",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "heroEyebrow": "Modding orientado a producción",
+      "heroTitle": "Construir escenarios narrativos de CK3 con patrones reutilizables y compartibles.",
+      "heroText": "Referencia práctica para usar junto al editor: arquitectura, story cycles, snippets reutilizables, recetas, debug y ejemplos concretos estilo Warcraft.",
+      "quick": [
+        [
+          "Campaña completa",
+          "story owner + registro",
+          "#recipe-campaign"
+        ],
+        [
+          "Agente en misión",
+          "viaje + llegada",
+          "#recipe-agent"
+        ],
+        [
+          "Infiltración",
+          "cooldown + duelo",
+          "#recipe-infiltration"
+        ],
+        [
+          "Debug rápido",
+          "síntoma → causa",
+          "#debug"
+        ]
+      ],
+      "docsSections": [
+        {
+          "id": "core-patterns",
+          "title": "1. Flujo de trabajo principal",
+          "kicker": "Workflow rápido",
+          "keywords": "workflow principal prioridad prototipo escenario backlog",
+          "html": "<div class='grid three'><div class='card'><h3>1 actor central</h3><p>Cada campaña necesita un <strong>story_owner</strong>. Los demás personajes orbitan a su alrededor.</p></div><div class='card'><h3>1 estado persistente</h3><p>Guarda actores y objetivos importantes en <code>scope:story.var:*</code>, no solo en scopes temporales.</p></div><div class='card'><h3>1 consecuencia fuerte</h3><p>Cada opción importante debe hacer claramente una cosa: guerra, artefacto, viaje, scheme, muerte, conversión.</p></div></div><div class='callout warn'>Regla de equipo: añade una mecánica, pruébala en juego, revisa <code>error.log</code> y luego añade la siguiente.</div>"
+        },
+        {
+          "id": "architecture",
+          "title": "2. Arquitectura de archivos",
+          "kicker": "Estructura",
+          "keywords": "architecture folders events scripted effects triggers localization modifiers",
+          "html": "<p>La estructura mínima limpia: events, scripted effects, scripted triggers y localización. Añade más carpetas solo cuando la mecánica exista.</p>",
+          "code": "events/\n  my_story_events.txt\n\ncommon/scripted_effects/\n  my_story_effects.txt\n\ncommon/scripted_triggers/\n  my_story_triggers.txt\n\nlocalization/english/\n  my_story_l_english.yml"
+        },
+        {
+          "id": "schema",
+          "title": "3. Flujo global de un escenario",
+          "kicker": "Mapa mental",
+          "keywords": "schema diagram flow scenario narrative pipeline",
+          "diagram": "SETUP HIDDEN\n  ↓ crea story + owner + flags globales\nINTRO VISIBLE\n  ↓ presenta el conflicto\nELECCIÓN MAYOR\n  ├─ ruta canónica → recompensas + story stage\n  └─ ruta alternativa → flags + riesgos + nuevos events\nCICLO\n  ↓ cooldown / viaje / infiltración / investigación\nRESOLUCIÓN\n  ├─ final canónico\n  └─ divergencia no canónica"
+        },
+        {
+          "id": "event",
+          "title": "4. Ciclo de vida de un event",
+          "kicker": "Patrón central",
+          "keywords": "event lifecycle immediate option after hidden trigger_event days",
+          "html": "<div class='grid three'><div class='card'><h3><code>trigger</code></h3><p>Condiciones de existencia. No abras un event si el actor clave está muerto o falta.</p></div><div class='card'><h3><code>immediate</code></h3><p>Prepara scopes, variables, búsquedas y tooltips. Evita consecuencias irreversibles aquí.</p></div><div class='card'><h3><code>option</code></h3><p>Aplica lo que el jugador o la IA elige realmente.</p></div></div>",
+          "snippet": "event"
+        },
+        {
+          "id": "scopes",
+          "title": "5. Scopes: el centro del debug",
+          "kicker": "Fiabilidad",
+          "keywords": "scope root this save_scope_as delayed event actor artifact",
+          "html": "<p>Los escenarios largos suelen romperse porque un scope ya no existe. Usa scopes temporales para la cadena actual y variables de story para estado persistente.</p><div class='grid two'><div class='card'><h3>Temporal</h3><p><code>save_scope_as</code> sirve dentro de la cadena actual. Es frágil tras eventos diferidos.</p></div><div class='card'><h3>Persistente</h3><p><code>scope:story.var:actor</code> es más seguro para ciclos, viajes, triggers diferidos y fallbacks.</p></div></div>",
+          "snippet": "registry"
+        },
+        {
+          "id": "state",
+          "title": "6. Estado de story",
+          "kicker": "State machine",
+          "keywords": "story state machine stage variable flag canon alternate",
+          "html": "<p>Usa un stage numérico para progresión lineal y flags para estados booleanos. Añade flags anti-farm a recompensas alternativas.</p>",
+          "multiSnippets": [
+            [
+              "Stage",
+              "stage"
+            ],
+            [
+              "Flag anti-farm",
+              "antifarm"
+            ]
+          ]
+        },
+        {
+          "id": "story-cycle",
+          "title": "7. Story cycles: escenarios vivos reutilizables",
+          "kicker": "Campaña viva",
+          "keywords": "story cycle story owner create_story variable cooldown on_trigger_fail recurring",
+          "html": "<p>El modelo más sólido: un setup hidden crea la story, el owner sostiene la campaña, los actores se registran y los ciclos disparan misiones, investigaciones y resoluciones.</p><div class='grid two'><div class='card'><h3>Copia esto</h3><ul><li><code>create_story</code> en un setup hidden.</li><li><code>debug_log</code> al inicio.</li><li><code>scope:story.var:*</code> para actores.</li><li><code>cooldown</code> para bucles.</li><li><code>on_trigger_fail</code> para fallbacks seguros.</li></ul></div><div class='card'><h3>Evita esto</h3><ul><li>Hardcodear el mismo personaje por todas partes.</li><li>Reiniciar bucles sin cooldown o flags.</li><li>Poner consecuencias de elección en <code>immediate</code>.</li><li>Crear una campaña sin resolución.</li></ul></div></div>",
+          "diagram": "create_story\n  ↓\nstory_owner\n  ↓\nscope:story.var:actor_A / actor_B / target\n  ↓\nmission event / cooldown event / travel event\n  ↓\nruta canónica O ruta alternativa\n  ↓\nresolución O fallback"
+        },
+        {
+          "id": "war",
+          "title": "8. ¿Guerra directa o facción?",
+          "kicker": "Lógica de guerra",
+          "keywords": "war casus belli cb independence_war independence_faction_war faction start_war",
+          "html": "<div class='grid two'><div class='card'><h3>Guerra directa</h3><p>Un personaje ataca ahora. Usa un CB individual que valide atacante y defensor.</p></div><div class='card'><h3>Facción</h3><p>La presión política crece primero. La guerra viene del sistema de facciones.</p></div></div>",
+          "multiSnippets": [
+            [
+              "Direct war",
+              "directwar"
+            ],
+            [
+              "Faction pressure",
+              "factionwar"
+            ]
+          ]
+        },
+        {
+          "id": "artifacts",
+          "title": "9. Artefactos y objetos únicos",
+          "kicker": "Propiedad",
+          "keywords": "artifact frostmourne owner claim set_owner variable",
+          "html": "<p>Nunca asumas que el artefacto sigue perteneciendo al personaje esperado. Búscalo, verifica que existe y luego transfiérelo o añade un claim.</p>",
+          "snippet": "artifact"
+        },
+        {
+          "id": "debug",
+          "title": "10. Matriz de debug",
+          "kicker": "Síntoma → causa",
+          "keywords": "debug error log symptom cause scope war event loop",
+          "html": "<div class='grid two'><div class='card'><h3>El event no dispara</h3><p>Revisa <code>trigger</code>, story scope ausente, actor faltante, receiver incorrecto.</p></div><div class='card'><h3>La guerra no empieza</h3><p>CB incorrecto, relación de liege inválida, atacante sin tierra, objetivo inválido.</p></div><div class='card'><h3>El bucle se repite</h3><p>Falta cooldown, falta flag, no hay estado terminal.</p></div><div class='card'><h3>Texto incorrecto</h3><p>Orden de <code>first_valid</code> incorrecto o trigger demasiado amplio.</p></div></div>"
+        }
+      ],
+      "recipesTitle": "Biblioteca de recetas",
+      "recipesIntro": "Copia una receta, adapta los nombres y pruébala sola. Son patrones de producción, no notas personales.",
+      "recipes": [
+        {
+          "id": "recipe-campaign",
+          "title": "Crear una story campaign completa",
+          "tags": [
+            "create_story",
+            "story_owner",
+            "registry"
+          ],
+          "diagram": "hidden setup → create_story → story_owner → register actors → launch intro",
+          "steps": [
+            "Usa un setup hidden con trigger y flag anti-duplicación.",
+            "Crea la story en el propietario de la campaña.",
+            "Registra de inmediato el owner y los actores clave.",
+            "Dispara el primer event visible solo cuando el setup sea válido."
+          ],
+          "snippet": "campaign"
+        },
+        {
+          "id": "recipe-actor",
+          "title": "Crear o recuperar un actor importante",
+          "tags": [
+            "actor",
+            "fallback",
+            "story var"
+          ],
+          "diagram": "known character? → yes: save scope → no: create character → store in story",
+          "steps": [
+            "Intenta recuperar primero el actor histórico/lore.",
+            "Si falta o está muerto, crea un actor fallback.",
+            "Guarda el resultado en <code>scope:story.var:actor</code>.",
+            "Usa esa variable después en lugar de hardcodear."
+          ],
+          "snippet": "actor"
+        },
+        {
+          "id": "recipe-agent",
+          "title": "Enviar un agente en misión",
+          "tags": [
+            "travel",
+            "arrival",
+            "mission"
+          ],
+          "diagram": "agent selected → target stored → start_travel_plan → on_arrival_event",
+          "steps": [
+            "Guarda el objetivo en la story antes del viaje.",
+            "Usa <code>start_travel_plan</code> en el agente.",
+            "Usa <code>on_arrival_event</code> para resolver la misión.",
+            "No resuelvas la misión antes de la llegada."
+          ],
+          "snippet": "mission"
+        },
+        {
+          "id": "recipe-infiltration",
+          "title": "Construir un ciclo de infiltración",
+          "tags": [
+            "cooldown",
+            "duel",
+            "spymaster"
+          ],
+          "diagram": "cooldown check → validate target → duel intrigue → caught OR success",
+          "steps": [
+            "Añade cooldown para evitar spam.",
+            "Valida agente, objetivo y spymaster.",
+            "Usa <code>duel</code> con la habilidad relevante.",
+            "En fallo, encarcela/expone al agente; en éxito, actualiza la story."
+          ],
+          "snippet": "infiltration"
+        },
+        {
+          "id": "recipe-investigation",
+          "title": "Crear una investigación con cooldown",
+          "tags": [
+            "investigation",
+            "cooldown",
+            "fallback"
+          ],
+          "diagram": "hidden probe → cooldown → visible choice → success / delayed retry / fallback",
+          "steps": [
+            "Usa un setup hidden para la investigación.",
+            "Añade un cooldown largo.",
+            "Si falla el trigger, redirige a un fallback.",
+            "Usa flags para impedir farmeo de recompensas."
+          ],
+          "snippet": "cooldown"
+        },
+        {
+          "id": "recipe-ending",
+          "title": "Crear finales canon / no canon",
+          "tags": [
+            "canon",
+            "alternate",
+            "resolution"
+          ],
+          "diagram": "final event → canon ending OR alternate survival/divergence",
+          "steps": [
+            "Haz que la ruta canónica sea la ruta esperada de la IA.",
+            "Haz explícitos y marcados los finales alternativos.",
+            "Recompensa ambos, pero de forma distinta.",
+            "Termina o redirige la story tras la resolución."
+          ],
+          "snippet": "ending"
+        },
+        {
+          "id": "recipe-transfer",
+          "title": "Transferir el jugador tras una muerte o colapso",
+          "tags": [
+            "player",
+            "succession",
+            "set_player_character"
+          ],
+          "diagram": "old character dies → choose valid successor → set_player_character",
+          "steps": [
+            "Comprueba que el nuevo personaje existe, vive y es jugable.",
+            "Usa una opción visible si afecta al jugador.",
+            "Usa <code>show_as_tooltip</code> para explicar la transferencia.",
+            "Aplica el efecto oculto solo después de elegir."
+          ],
+          "snippet": "transfer"
+        },
+        {
+          "id": "recipe-crisis",
+          "title": "Crear una crisis mundial con notificaciones regionales",
+          "tags": [
+            "crisis",
+            "notifications",
+            "every_ruler"
+          ],
+          "diagram": "crisis starts → main effect → local notifications → target notifications → regional reactions",
+          "steps": [
+            "Aplica el efecto principal una sola vez.",
+            "Notifica distinto a gobernantes cercanos y lejanos.",
+            "Notifica directamente al objetivo y sus vasallos.",
+            "Usa regiones para mantener rendimiento y relevancia."
+          ],
+          "snippet": "crisis"
+        }
+      ],
+      "tools": {
+        "title": "Herramientas",
+        "intro": "Utilidades pequeñas para programar en paralelo.",
+        "generator": "Generador de events",
+        "generatorHelp": "Rellena los campos, genera un esqueleto y pégalo en tu archivo de events.",
+        "namespace": "Namespace",
+        "eventId": "Event ID",
+        "effect": "Efecto principal",
+        "receiver": "Scope receptor",
+        "target": "Scope objetivo",
+        "cb": "Casus belli",
+        "generate": "Generar esqueleto",
+        "checklist": "Checklist persistente",
+        "links": "Enlaces útiles",
+        "footer": "Documentación estática en un solo archivo. Sin framework, sin build."
+      },
+      "checklist": [
+        "Existe el story owner",
+        "Actores clave guardados en scope:story.var:*",
+        "Cada evento diferido tiene los scopes necesarios",
+        "Cada opción mayor tiene una consecuencia clara",
+        "El CB valida atacante y defensor",
+        "Cooldown o flag evita bucles",
+        "Fallback si un actor muere o falta",
+        "error.log revisado después de la prueba"
+      ]
+    }
+  }
+}

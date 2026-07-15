@@ -1,0 +1,59 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import CodeBlock from '../../../components/CodeBlock.astro';
+import data from '../../../data/appData.json';
+
+export function getStaticPaths() {
+  return Object.keys(data.i18n).map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+const L = data.i18n[lang] || data.i18n.en;
+const recipes = L.recipes;
+const recipe = recipes[0];
+const code = data.snippets[recipe.snippet] || '';
+---
+
+<AppLayout lang={lang} active="recipes" title={`${L.recipesTitle} · ${L.brandTitle}`} recipeId={recipe.id}>
+  <section class="hero">
+    <div class="kicker">{L.tabs.recipes}</div>
+    <h2>{L.recipesTitle}</h2>
+    <p>{L.recipesIntro}</p>
+  </section>
+
+  <div class="recipeWorkspace">
+    <aside class="recipeIndex">
+      {recipes.map((item) => (
+        <a class:list={['recipeListItem', { active: item.id === recipe.id }]} href={`./${item.id}/`}>
+          <span class="recipeListTitle">{item.title}</span>
+          <span class="recipeTags">
+            {item.tags.map((tag) => <span class="tag">{tag}</span>)}
+          </span>
+        </a>
+      ))}
+    </aside>
+
+    <article class="recipeDetail">
+      <header class="recipeHeader">
+        <div class="kicker">Recipe</div>
+        <h2>{recipe.title}</h2>
+        <div class="recipeTags">
+          {recipe.tags.map((tag) => <span class="tag">{tag}</span>)}
+        </div>
+      </header>
+
+      <div class="recipeBody">
+        <div>
+          <div class="diagram">{recipe.diagram}</div>
+          <div class="steps">
+            {recipe.steps.map((step, index) => (
+              <div class="step"><strong>{index + 1}.</strong>{step}</div>
+            ))}
+          </div>
+        </div>
+
+        <CodeBlock code={code} title={recipe.snippet} />
+      </div>
+    </article>
+  </div>
+</AppLayout>

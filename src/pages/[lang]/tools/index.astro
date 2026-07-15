@@ -1,0 +1,64 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import data from '../../../data/appData.json';
+
+export function getStaticPaths() {
+  return Object.keys(data.i18n).map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+const L = data.i18n[lang] || data.i18n.en;
+const T = L.tools;
+---
+
+<AppLayout lang={lang} active="tools" title={`${T.title} · ${L.brandTitle}`}>
+  <section class="hero">
+    <div class="kicker">{L.tabs.tools}</div>
+    <h2>{T.title}</h2>
+    <p>{T.intro}</p>
+  </section>
+
+  <section class="section">
+    <div class="kicker">Generator</div>
+    <h2>{T.generator}</h2>
+    <p>{T.generatorHelp}</p>
+
+    <form class="toolGrid" data-generator-form>
+      <div class="field">
+        <label>{T.namespace}</label>
+        <input name="namespace" value="my_story" />
+      </div>
+      <div class="field">
+        <label>{T.eventId}</label>
+        <input name="eventId" value="0001" />
+      </div>
+      <div class="field">
+        <label>{T.receiver}</label>
+        <input name="receiver" value="root" />
+      </div>
+      <div class="field">
+        <label>{T.target}</label>
+        <input name="target" value="scope:target" />
+      </div>
+      <div class="field">
+        <label>{T.cb}</label>
+        <input name="cb" value="independence_war" />
+      </div>
+      <div class="field">
+        <label>{T.effect}</label>
+        <input name="effect" value="add_trait = brave" />
+      </div>
+      <button class="toolButton" type="submit">{T.generate}</button>
+    </form>
+
+    <div class="codewrap generated" data-generator-output>
+      <div class="codeHeader">
+        <span class="codeTitle">generated event</span>
+        <button class="copyButton" type="button" data-copy-code>Copy</button>
+      </div>
+      <pre><code></code></pre>
+    </div>
+  </section>
+
+  <script src={`${import.meta.env.BASE_URL}scripts/tools.js`} defer></script>
+</AppLayout>
