@@ -14,7 +14,15 @@
     "factionwar": "scope:actor = {\n  create_faction = {\n    type = independence_faction\n    target = scope:liege\n  }\n}",
     "artifact": "# Store and transfer an artifact safely\nscope:old_owner = {\n  every_character_artifact = {\n    limit = { has_variable = frostmourne }\n    save_scope_as = key_artifact\n  }\n}\n\nif = {\n  limit = { exists = scope:key_artifact }\n  scope:key_artifact = { set_owner = scope:new_owner }\n}",
     "stage": "scope:story = {\n  set_variable = {\n    name = story_stage\n    value = 2\n  }\n}",
-    "antifarm": "if = {\n  limit = { NOT = { has_character_flag = reward_already_given } }\n  following_alternate_path_effect = yes\n  add_character_flag = reward_already_given\n}"
+    "antifarm": "if = {\n  limit = { NOT = { has_character_flag = reward_already_given } }\n  following_alternate_path_effect = yes\n  add_character_flag = reward_already_given\n}",
+    "cycle-setup": "namespace = wc_my_path\n\n# Hidden setup — fires once, guards with a global_var\nwc_my_path.0001 = {\n  scope = none\n  hidden = yes\n\n  trigger = {\n    NOT = { has_global_variable = wc_my_path_story }\n  }\n\n  immediate = {\n    character:MY_HERO = {\n      create_story = story_my_path\n      save_scope_as = story_owner\n    }\n\n    # Anchor the story globally so any event can reach it later\n    set_global_variable = {\n      name = wc_my_path_story\n      value = scope:story\n    }\n\n    scope:story = {\n      set_variable = { name = story_stage  value = 1 }\n      set_variable = { name = champion  value = scope:story_owner }\n    }\n\n    scope:story_owner = {\n      trigger_event = { id = wc_my_path.1000  days = 1 }\n    }\n\n    debug_log = \"wc_my_path.0001 — story created, stage 1\"\n    debug_log_date = yes\n  }\n}",
+    "cycle-stage": "# Gate: only fire at story_stage 2+\ntrigger = {\n  exists = scope:story\n  scope:story = {\n    has_variable = story_stage\n    var:story_stage >= 2\n  }\n}\n\n# Advance the stage from a visible option\noption = {\n  name = wc_my_path.1010.a\n\n  scope:story = {\n    set_variable = { name = story_stage  value = 3 }\n  }\n  trigger_event = wc_my_path.1020\n}\n\n# Access stage from anywhere via the global anchor\n# (works in delayed events where scope:story may be gone)\ntrigger = {\n  has_global_variable = wc_my_path_story\n  global_var:wc_my_path_story = {\n    has_variable = story_stage\n    var:story_stage >= 2\n  }\n}",
+    "cycle-champion": "# Champion management: detects death, transfers artifact, ends story\nwc_my_path.0100 = {\n  type = character_event\n  hidden = yes\n\n  trigger = {\n    exists = scope:story\n    scope:story.var:champion = { is_dead = yes }\n  }\n\n  immediate = {\n    scope:story.story_owner = { save_scope_as = story_owner }\n\n    # Retrieve the key artifact from the dead champion\n    scope:story.var:champion = {\n      every_character_artifact = {\n        limit = { has_variable = key_artifact }\n        save_scope_as = the_artifact\n      }\n    }\n\n    if = {\n      limit = { exists = scope:the_artifact }\n      scope:story_owner = {\n        scope:the_artifact = { set_owner = prev }\n      }\n    }\n\n    # Close the story cycle when its champion is gone\n    scope:story = { end_story = yes }\n  }\n}",
+    "story-type-decl": "# common/story_cycles/wc_my_path.txt\nstory_my_path = {\n  on_setup = {\n    # Runs immediately when create_story is called on a character\n    # story_owner scope is available here\n    set_variable = { name = story_stage  value = 1 }\n\n    story_owner = {\n      trigger_event = { id = wc_my_path.1001  days = 14 }\n    }\n    debug_log = \"story_my_path — on_setup complete\"\n    debug_log_date = yes\n  }\n\n  on_end = {\n    # Cleanup when end_story is called\n    story_owner = {\n      remove_variable = story_stage\n      remove_variable = champion\n    }\n    debug_log = \"story_my_path — ended\"\n  }\n\n  on_owner_death = {\n    # Called when story_owner dies\n    end_story = yes\n  }\n}",
+    "effect-group-timer": "story_my_path = {\n  # on_setup / on_end / on_owner_death ...\n\n  # Check champion status every 2 years while the story is active\n  effect_group = {\n    years = 2\n\n    triggered_effect = {\n      trigger = {\n        story_owner = {\n          has_variable = champion\n          var:champion = { is_alive = yes }\n        }\n      }\n      effect = {\n        story_owner = {\n          trigger_event = { id = wc_my_path.0100  days = 1 }\n        }\n      }\n    }\n  }\n}",
+    "viz-block": "# Makes the story visible in the character's story panel\nstory_my_path = {\n  visible = yes\n\n  icon = {\n    trigger = { always = yes }\n    reference = \"gfx/interface/icons/my_story_icon.dds\"\n  }\n\n  visualization = {\n    # Localized description shown in the story UI tooltip\n    custom_string_key = \"MY_PATH_STORY_UI_STRING\"\n\n    # Track a key character\n    character = {\n      variable_name = \"champion\"\n      label = \"MY_PATH_CHAMPION\"\n    }\n\n    # Progress counter displayed as a bar\n    basic_counter = {\n      variable_name = \"story_stage\"\n      min = 0\n      max = 5\n      label = \"MY_PATH_STAGE\"\n    }\n\n    # Active modifier shown in the panel\n    modifiers = {\n      my_path_active_modifier\n    }\n  }\n\n  on_setup = { ... }\n  on_end = { ... }\n  on_owner_death = { end_story = yes }\n}",
+    "effect-group-advanced": "story_my_path = {\n  # Random interval between 30 and 60 days, fires 50 % of the time\n  effect_group = {\n    days = { 30 60 }\n    chance = 50\n\n    trigger = {\n      story_owner = { has_variable = champion }\n    }\n\n    # first_valid: only the first matching triggered_effect fires\n    first_valid = {\n      triggered_effect = {\n        trigger = {\n          story_owner = { var:champion = { is_dead = yes } }\n        }\n        effect = { end_story = yes }\n      }\n      triggered_effect = {\n        trigger = { always = yes }\n        effect = {\n          story_owner = {\n            # Draws a random event from the on_action pool\n            trigger_event = { on_action = my_path_monthly_events }\n          }\n        }\n      }\n    }\n  }\n}",
+    "global-list-guard": "# Guard pattern: use a global variable list to prevent re-firing\n# More robust than has_global_variable for campaign-wide flags\n\nimmediate = {\n  add_to_global_variable_list = {\n    name = wc_events_happened\n    target = flag:my_story_started\n  }\n}\n\n# Check anywhere:\ntrigger = {\n  NOT = {\n    is_in_global_list = {\n      variable = wc_events_happened\n      target = flag:my_story_started\n    }\n  }\n}"
   },
   "i18n": {
     "en": {
@@ -24,7 +32,8 @@
       "tabs": {
         "docs": "Docs",
         "recipes": "Recipes",
-        "tools": "Tools"
+        "tools": "Tools",
+        "tutorial": "Tutorial"
       },
       "search": "Search: / then scope, war, actor…",
       "theme": "Toggle light/dark",
@@ -58,52 +67,68 @@
       ],
       "docsSections": [
         {
-          "id": "core-patterns",
-          "title": "1. Core workflow: what you use constantly",
-          "kicker": "Fast workflow",
-          "keywords": "core workflow priority prototype scenario active backlog",
-          "html": "<div class='grid three'><div class='card'><h3>1 central actor</h3><p>Every campaign needs a <strong>story_owner</strong>. Everyone else orbits around that character.</p></div><div class='card'><h3>1 persistent state</h3><p>Store important actors and targets in <code>scope:story.var:*</code>, not in temporary scopes only.</p></div><div class='card'><h3>1 strong consequence</h3><p>Each major option should clearly do one thing: war, artifact, travel, scheme, death, conversion.</p></div></div><div class='callout warn'>Team rule: add one mechanic, test it in-game, check <code>error.log</code>, then add the next mechanic.</div>"
+          "id": "concept",
+          "track": "story-cycle",
+          "title": "1. What is a story_cycle?",
+          "kicker": "Core concept",
+          "keywords": "story cycle concept story_owner persistent living campaign what is",
+          "html": "<p>A <strong>story_cycle</strong> is a persistent object attached to a character — the <code>story_owner</code>. It survives save/load, stores shared variables accessible from any event, and fires hooks when created, ended, or when the owner dies.</p><div class='grid two'><div class='card'><h3>story_cycle vs standalone event</h3><p>A standalone event fires, resolves and is forgotten. A story_cycle lives: it remembers actors, tracks campaign state and can trigger new events years later — all from one anchored object.</p></div><div class='card'><h3>What it holds</h3><ul><li>One <strong>story_owner</strong> (the campaign anchor)</li><li><strong>Variables</strong>: actors, artifacts, stage counters</li><li><strong>Hooks</strong>: <code>on_setup</code>, <code>on_end</code>, <code>on_owner_death</code></li><li>Optional <strong>effect_groups</strong> for recurring timers</li></ul></div></div><div class='callout'>One campaign = one story_cycle = one story_owner. Everything else orbits around that anchor.</div>"
         },
         {
           "id": "architecture",
-          "title": "2. File architecture",
+          "track": "story-cycle",
+          "title": "2. File structure",
           "kicker": "Structure",
-          "keywords": "architecture folders events scripted effects triggers localization modifiers",
-          "html": "<p>The minimum clean structure is: events, scripted effects, scripted triggers and localization. Add more folders only when the mechanic exists.</p>",
-          "code": "events/\n  my_story_events.txt\n\ncommon/scripted_effects/\n  my_story_effects.txt\n\ncommon/scripted_triggers/\n  my_story_triggers.txt\n\nlocalization/english/\n  my_story_l_english.yml"
+          "keywords": "architecture folders events scripted effects triggers localization modifiers story_cycles",
+          "html": "<p>A minimal story_cycle needs four files. Add more folders only when the mechanic exists.</p>",
+          "code": "common/story_cycles/\n  wc_my_path.txt        # story_type declaration\n\nevents/\n  wc_my_path_events.txt\n\ncommon/scripted_effects/\n  wc_my_path_effects.txt\n\ncommon/scripted_triggers/\n  wc_my_path_triggers.txt\n\nlocalization/english/\n  wc_my_path_l_english.yml"
         },
         {
-          "id": "schema",
-          "title": "3. Global scenario flow",
-          "kicker": "Mental map",
-          "keywords": "schema diagram flow scenario narrative pipeline",
-          "diagram": "SETUP HIDDEN\n  ↓ create story + owner + global flags\nINTRO VISIBLE\n  ↓ present the conflict\nMAJOR CHOICE\n  ├─ canon path → rewards + story stage\n  └─ alternate path → flags + risks + new events\nCYCLE\n  ↓ cooldown / travel / infiltration / investigation\nRESOLUTION\n  ├─ canon ending\n  └─ non-canon divergence"
+          "id": "story-type-decl",
+          "track": "story-cycle",
+          "title": "3. Declare the story_type",
+          "kicker": "Declaration",
+          "keywords": "story_type declare on_setup on_end on_owner_death common story_cycles declaration hooks",
+          "html": "<p>Every story_cycle starts with a declaration in <code>common/story_cycles/</code>. The identifier in the file (<code>story_my_path = { ... }</code>) is what you pass to <code>create_story</code>. Three hooks are available — only <code>on_setup</code> is required.</p><div class='grid three'><div class='card'><h3><code>on_setup</code></h3><p>Fires immediately when <code>create_story</code> is called. Set initial variables and fire the first event here. <code>story_owner</code> is in scope.</p></div><div class='card'><h3><code>on_end</code></h3><p>Fires when <code>end_story</code> is called. Remove variables and modifiers. Required for memory hygiene.</p></div><div class='card'><h3><code>on_owner_death</code></h3><p>Fires when the story_owner dies. Usually calls <code>end_story</code>, but can transfer ownership instead.</p></div></div>",
+          "snippet": "story-type-decl"
         },
         {
-          "id": "event",
-          "title": "4. Event lifecycle",
-          "kicker": "Core pattern",
-          "keywords": "event lifecycle immediate option after hidden trigger_event days",
-          "html": "<div class='grid three'><div class='card'><h3><code>trigger</code></h3><p>Existence conditions. Do not open an event if the key actor is dead or missing.</p></div><div class='card'><h3><code>immediate</code></h3><p>Prepare scopes, variables, lookups and tooltips. Avoid irreversible consequences here.</p></div><div class='card'><h3><code>option</code></h3><p>Apply what the player or AI actually chooses.</p></div></div>",
-          "snippet": "event"
+          "id": "story-setup",
+          "track": "story-cycle",
+          "title": "4. The hidden setup event — create_story",
+          "kicker": "Campaign start",
+          "keywords": "create_story global_var setup hidden event guard anti-duplicate story_owner anchor global_variable_list flag",
+          "html": "<p>The setup event fires once with <code>scope = none</code>. It creates the story on the campaign owner, anchors it in a <code>global_var</code> for delayed access, then fires the first visible event.</p><div class='grid two'><div class='card'><h3>Simple guard</h3><p><code>NOT = { has_global_variable = wc_my_path_story }</code> — prevents re-creating the story on save/reload. Fast and readable.</p></div><div class='card'><h3>Robust guard (preferred)</h3><p><code>is_in_global_list { variable = wc_events_happened  target = flag:my_path_started }</code> — a single shared list tracks all campaign events. Cheaper than one variable per story.</p></div></div>",
+          "multiSnippets": [
+            [
+              "Setup event",
+              "cycle-setup"
+            ],
+            [
+              "Global list guard",
+              "global-list-guard"
+            ]
+          ]
         },
         {
           "id": "scopes",
-          "title": "5. Scopes: the center of debugging",
+          "track": "story-cycle",
+          "title": "5. Scopes and persistent variables",
           "kicker": "Reliability",
-          "keywords": "scope root this save_scope_as delayed event actor artifact",
-          "html": "<p>Long scenarios usually break because a scope no longer exists. Use temporary scopes for the current chain, and story variables for long-running state.</p><div class='grid two'><div class='card'><h3>Temporary</h3><p><code>save_scope_as</code> is good inside the current event chain. It is fragile after delayed events.</p></div><div class='card'><h3>Persistent</h3><p><code>scope:story.var:actor</code> is safer for cycles, travel, delayed triggers and fallback events.</p></div></div>",
+          "keywords": "scope root this save_scope_as delayed event actor artifact story var persistent",
+          "html": "<p>Most campaign bugs happen because a scope no longer exists. Use temporary scopes for the current event chain, and story variables for state that must outlast any single event.</p><div class='grid two'><div class='card'><h3>Temporary</h3><p><code>save_scope_as</code> is safe inside the current event chain. It becomes unreliable after delayed events or save/load cycles.</p></div><div class='card'><h3>Persistent</h3><p><code>scope:story.var:actor</code> survives delays, saves and reloads. Use it for any actor or value the campaign depends on.</p></div></div>",
           "snippet": "registry"
         },
         {
           "id": "state",
-          "title": "6. Story state",
-          "kicker": "State machine",
-          "keywords": "story state machine stage variable flag canon alternate",
-          "html": "<p>Use a numeric stage for linear progression and flags for boolean states. Add anti-farm flags to alternate rewards.</p>",
+          "track": "story-cycle",
+          "title": "6. Campaign state machine",
+          "kicker": "State tracking",
+          "keywords": "story state machine stage variable flag canon alternate anti-farm",
+          "html": "<p>Use a numeric <code>story_stage</code> for linear progression and character flags for boolean states. Add anti-farm flags to alternate rewards to prevent repeated collection.</p>",
           "multiSnippets": [
             [
-              "Stage",
+              "Stage counter",
               "stage"
             ],
             [
@@ -113,19 +138,105 @@
           ]
         },
         {
-          "id": "story-cycle",
-          "title": "7. Story cycles: reusable living scenarios",
-          "kicker": "Living campaign",
-          "keywords": "story cycle story owner create_story variable cooldown on_trigger_fail recurring",
-          "html": "<p>The strongest model is: hidden setup creates the story, the owner carries the campaign, actors are registered, then cycles trigger missions, investigations and resolutions.</p><div class='grid two'><div class='card'><h3>Copy this</h3><ul><li><code>create_story</code> in hidden setup.</li><li><code>debug_log</code> at startup.</li><li><code>scope:story.var:*</code> for actors.</li><li><code>cooldown</code> for loops.</li><li><code>on_trigger_fail</code> for safe fallback.</li></ul></div><div class='card'><h3>Avoid this</h3><ul><li>Hardcoding the same character everywhere.</li><li>Restarting loops without cooldown or flags.</li><li>Putting choice consequences in <code>immediate</code>.</li><li>Creating a campaign with no resolution.</li></ul></div></div>",
-          "diagram": "create_story\n  ↓\nstory_owner\n  ↓\nscope:story.var:actor_A / actor_B / target\n  ↓\nmission event / cooldown event / travel event\n  ↓\ncanon path OR alternate path\n  ↓\nresolution OR fallback"
+          "id": "event",
+          "track": "story-cycle",
+          "title": "7. Event lifecycle: trigger / immediate / option",
+          "kicker": "Event pattern",
+          "keywords": "event lifecycle immediate option after hidden trigger_event days character_event",
+          "html": "<div class='grid three'><div class='card'><h3><code>trigger</code></h3><p>Existence conditions. Do not open an event if the key actor is dead or the story is gone.</p></div><div class='card'><h3><code>immediate</code></h3><p>Prepare scopes, variables and tooltips. Avoid irreversible consequences here — put those in options.</p></div><div class='card'><h3><code>option</code></h3><p>Apply what the player or AI chooses. This is where consequences belong.</p></div></div>",
+          "snippet": "event"
+        },
+        {
+          "id": "stage-gates",
+          "track": "story-cycle",
+          "title": "8. Chaining events with stage gates",
+          "kicker": "Sequencing",
+          "keywords": "stage gate chain trigger_event story_stage sequencing branching global_var delayed",
+          "html": "<p>A stage gate ensures events fire in the right order. An event gated on <code>story_stage >= 2</code> will never fire before stage 1 is resolved, preventing out-of-order triggers in complex chains.</p><div class='callout'>When accessing story state from a delayed event — where <code>scope:story</code> may be gone — use the <code>global_var</code> anchor: <code>global_var:my_path_story = { var:story_stage >= 2 }</code>.</div>",
+          "snippet": "cycle-stage"
+        },
+        {
+          "id": "effect-group",
+          "track": "story-cycle",
+          "title": "9. effect_group: recurring timers",
+          "kicker": "Recurring logic",
+          "keywords": "effect_group timer recurring years triggered_effect periodic champion death detection",
+          "html": "<p><code>effect_group</code> blocks live inside the story_type declaration. They fire automatically on a fixed schedule while the story is active. For probabilistic or multi-branch logic, see <em>Appendix B</em>.</p><div class='grid two'><div class='card'><h3>Good uses</h3><ul><li>Periodic champion status checks</li><li>Campaign progress gate evaluation</li><li>Modifier or environment updates</li><li>Time-based crisis escalation</li></ul></div><div class='card'><h3>Pitfalls</h3><ul><li>Keep logic thin: delegate to a hidden event, not inline</li><li>Avoid sub-annual intervals on active stories (performance)</li><li>Always use <code>triggered_effect</code> with a guard, or the effect fires unconditionally</li></ul></div></div>",
+          "snippet": "effect-group-timer"
+        },
+        {
+          "id": "artifacts",
+          "track": "story-cycle",
+          "title": "10. Champions and artifacts",
+          "kicker": "Objects and death",
+          "keywords": "artifact champion every_character_artifact set_owner end_story is_dead key artifact",
+          "html": "<p>Never assume an artifact is still with the expected character. Always search it with <code>every_character_artifact</code>, verify it exists, then transfer or reclaim it. Champions follow the same defensive pattern: check <code>is_dead</code> before acting.</p>",
+          "multiSnippets": [
+            [
+              "Champion death",
+              "cycle-champion"
+            ],
+            [
+              "Artifact transfer",
+              "artifact"
+            ]
+          ]
+        },
+        {
+          "id": "debug",
+          "track": "story-cycle",
+          "title": "11. Debug matrix",
+          "kicker": "Symptom → cause",
+          "keywords": "debug error log symptom cause scope war event loop localization yml story_type",
+          "html": "<div class='grid two'><div class='card'><h3>Event does not fire</h3><p>Check <code>trigger</code>, missing story scope, dead or missing actor, wrong receiver scope.</p></div><div class='card'><h3>Story does not create</h3><p>Wrong story_type name: must match the identifier in <code>common/story_cycles/</code> exactly.</p></div><div class='card'><h3>Loop repeats forever</h3><p>Missing <code>cooldown</code> or guard flag. Add <code>debug_log</code> at the loop event entry to count fires.</p></div><div class='card'><h3>War does not start</h3><p>Wrong CB, invalid liege relation, unlanded attacker, or target does not validate.</p></div><div class='card'><h3>Text shows key instead of text</h3><p>Missing or malformed <code>.yml</code> file. Check BOM encoding (must be UTF-8 BOM) and indentation (one leading space per line).</p></div><div class='card'><h3>Stage gate skipped</h3><p><code>scope:story</code> is not available in delayed events — use <code>global_var:my_path_story</code> to read variables from outside the story scope.</p></div></div>"
+        },
+        {
+          "id": "story-cycle-example",
+          "track": "story-cycle",
+          "title": "12. Full example: wc_path_of_the_damned anatomy",
+          "kicker": "Worked example",
+          "keywords": "story_cycle namespace champion global_var story_stage end_story duel prowess path_of_the_damned warcraft full example",
+          "html": "<p>The <code>wc_path_of_the_damned</code> namespace is a complete story_cycle from a real Warcraft mod. Its event ranges follow a naming convention that scales cleanly to large campaigns. All the patterns from sections 3–10 appear here in context.</p><div class='grid three'><div class='card'><h3>0000 — Setup</h3><p>Hidden events: <code>create_story</code>, register the story_owner, anchor the story in a <code>global_var</code>, set <code>story_stage = 1</code>.</p></div><div class='card'><h3>0100 — Champions</h3><p>Hidden <code>effect_group</code>-triggered events: detect champion death, transfer Frostmourne via <code>every_character_artifact</code>, call <code>end_story</code>.</p></div><div class='card'><h3>1000 — Main story</h3><p>Visible narrative events: multi-option choices, <code>story_stage</code> gates, branching paths.</p></div><div class='card'><h3>1900 — Utilities</h3><p>Hidden side-effect events: spawn armies via <code>scripted_effect</code>, apply modifiers, setup consequences.</p></div><div class='card'><h3>2000 — Duels</h3><p>Combat events using <code>duel { skill = prowess }</code>, weighted outcomes, named death effects.</p></div></div><div class='callout'><code>global_var</code> anchor: <code>set_global_variable { name = my_path_story  value = scope:story }</code> — any delayed event reads state via <code>global_var:my_path_story</code> without needing a live <code>scope:story</code>.</div>",
+          "multiSnippets": [
+            [
+              "Setup event",
+              "cycle-setup"
+            ],
+            [
+              "Stage gate",
+              "cycle-stage"
+            ],
+            [
+              "Champion",
+              "cycle-champion"
+            ]
+          ]
+        },
+        {
+          "id": "visualization",
+          "track": "reference",
+          "title": "A. Story visualization panel",
+          "kicker": "UI panel",
+          "keywords": "visualization visible icon custom_string_key character basic_counter tug_of_war_counter modifiers traits decisions story panel UI",
+          "html": "<p>Add <code>visible = yes</code> to expose the story in the character's story panel. The <code>visualization</code> block controls what the panel displays: tracked characters, progress bars, active modifiers, traits or decisions. All labels reference localization keys.</p><div class='grid two'><div class='card'><h3>Available widgets</h3><ul><li><code>character</code> — tracked character with label</li><li><code>character_list</code> — list of characters</li><li><code>basic_counter</code> — min/max progress bar</li><li><code>tug_of_war_counter</code> — bidirectional bar (min negative)</li><li><code>modifiers</code> — active modifier list</li><li><code>traits</code> / <code>decisions</code> — shown if present</li><li><code>custom_string_key</code> — free localization string</li></ul></div><div class='card'><h3>Notes</h3><ul><li>All <code>variable_name</code> references are story variables (<code>scope:story.var:*</code>)</li><li><code>label</code> is a localization key, not a plain string</li><li>The panel only shows while the story is active</li><li>Use <code>icon</code> + <code>trigger</code> to swap icons dynamically</li></ul></div></div>",
+          "snippet": "viz-block"
+        },
+        {
+          "id": "effect-group-advanced",
+          "track": "reference",
+          "title": "B. Advanced effect_group patterns",
+          "kicker": "effect_group depth",
+          "keywords": "effect_group first_valid chance probability random interval days min max on_action months years",
+          "html": "<p>Beyond the basic fixed-interval timer, <code>effect_group</code> supports random intervals, probability gates and multi-branch selection.</p><div class='grid three'><div class='card'><h3>Random interval</h3><p><code>days = { 30 60 }</code> or <code>years = { 1 3 }</code> — fires after a random number of days/years in the range. Prevents all stories firing on the same tick.</p></div><div class='card'><h3><code>chance</code></h3><p>Integer 0–100. The effect_group only fires if the roll succeeds. Missing = 100 (always fire if trigger passes).</p></div><div class='card'><h3><code>first_valid</code></h3><p>Wraps multiple <code>triggered_effect</code> blocks. Only the first one whose trigger passes fires. Use for priority chains: check dead → check hurt → fallback.</p></div></div><div class='callout'><code>on_action</code> inside effect: <code>trigger_event = { on_action = my_pool }</code> — draws a random event from the on_action pool rather than hardcoding one event ID. Keeps variety without extra effect_groups.</div>",
+          "snippet": "effect-group-advanced"
         },
         {
           "id": "war",
-          "title": "8. Direct war or faction?",
+          "track": "reference",
+          "title": "C. War — direct or faction?",
           "kicker": "War logic",
           "keywords": "war casus belli cb independence_war independence_faction_war faction start_war",
-          "html": "<div class='grid two'><div class='card'><h3>Direct war</h3><p>A character attacks now. Use an individual CB that validates attacker and defender.</p></div><div class='card'><h3>Faction</h3><p>Political pressure builds first. The war comes from the faction system.</p></div></div>",
+          "html": "<div class='grid two'><div class='card'><h3>Direct war</h3><p>A character attacks immediately. Use an individual CB that validates attacker and defender.</p></div><div class='card'><h3>Faction</h3><p>Political pressure builds first. The war comes from the faction system when tension peaks.</p></div></div>",
           "multiSnippets": [
             [
               "Direct war",
@@ -138,19 +249,12 @@
           ]
         },
         {
-          "id": "artifacts",
-          "title": "9. Artifacts and unique objects",
-          "kicker": "Ownership",
-          "keywords": "artifact frostmourne owner claim set_owner variable",
-          "html": "<p>Never assume the artifact still belongs to the expected character. Search it, verify it exists, then transfer or claim it.</p>",
-          "snippet": "artifact"
-        },
-        {
-          "id": "debug",
-          "title": "10. Debug matrix",
-          "kicker": "Symptom → cause",
-          "keywords": "debug error log symptom cause scope war event loop",
-          "html": "<div class='grid two'><div class='card'><h3>Event does not fire</h3><p>Check <code>trigger</code>, missing story scope, missing actor, wrong receiver.</p></div><div class='card'><h3>War does not start</h3><p>Wrong CB, invalid liege relation, unlanded attacker, target not valid.</p></div><div class='card'><h3>Loop repeats forever</h3><p>Missing <code>cooldown</code>, missing flag, no terminal state.</p></div><div class='card'><h3>Text shows wrong variant</h3><p>Bad <code>first_valid</code> order or trigger too broad.</p></div></div>"
+          "id": "schema",
+          "track": "reference",
+          "title": "D. Global scenario flow",
+          "kicker": "Mental map",
+          "keywords": "schema diagram flow scenario narrative pipeline overview global",
+          "diagram": "DECLARE story_type\n  common/story_cycles/wc_my_path.txt\n    ↓\nHIDDEN SETUP EVENT  (scope = none)\n  create_story → global_var anchor → story_stage = 1\n    ↓\nINTRO VISIBLE EVENT\n  present the conflict, introduce actors\n    ↓\nMAJOR CHOICE\n  ├─ canon path → rewards + story_stage++\n  └─ alternate path → flags + risks + new events\n    ↓\nEFFECT_GROUP TIMER  (background)\n  check champion / progress / environment every N days\n    ↓\nRESOLUTION\n  ├─ canon ending → end_story\n  └─ non-canon divergence → flag + alternate resolution"
         }
       ],
       "recipesTitle": "Recipe library",
@@ -318,7 +422,11 @@
         "Cooldown or flag prevents loops",
         "Fallback exists for dead/missing actors",
         "error.log checked after the test"
-      ]
+      ],
+      "trackStoryLabel": "Story Cycle Guide",
+      "trackRefLabel": "Reference",
+      "tutorialTitle": "Story Cycle — Step by Step",
+      "tutorialIntro": "A guided walkthrough: from declaring a story_type to a complete, working story_cycle. Read each section in order and apply it directly in your mod."
     },
     "fr": {
       "metaTitle": "CK3 Scenario Modding — Documentation utilitaire",
@@ -327,7 +435,8 @@
       "tabs": {
         "docs": "Docs",
         "recipes": "Recettes",
-        "tools": "Outils"
+        "tools": "Outils",
+        "tutorial": "Tutoriel"
       },
       "search": "Rechercher : / puis scope, guerre, acteur…",
       "theme": "Basculer clair/sombre",
@@ -361,52 +470,68 @@
       ],
       "docsSections": [
         {
-          "id": "core-patterns",
-          "title": "1. Flux de travail principal",
-          "kicker": "Workflow rapide",
-          "keywords": "workflow principal priorite prototype scenario backlog",
-          "html": "<div class='grid three'><div class='card'><h3>1 acteur central</h3><p>Chaque campagne a besoin d’un <strong>story_owner</strong>. Les autres personnages gravitent autour de lui.</p></div><div class='card'><h3>1 état persistant</h3><p>Stocke les acteurs et cibles importants dans <code>scope:story.var:*</code>, pas uniquement dans des scopes temporaires.</p></div><div class='card'><h3>1 conséquence forte</h3><p>Chaque option majeure doit faire clairement une chose : guerre, artefact, voyage, scheme, mort, conversion.</p></div></div><div class='callout warn'>Règle d’équipe : ajoute une mécanique, teste-la en jeu, vérifie <code>error.log</code>, puis ajoute la suivante.</div>"
+          "id": "concept",
+          "track": "story-cycle",
+          "title": "1. Qu'est-ce qu'un story_cycle ?",
+          "kicker": "Concept de base",
+          "keywords": "story cycle concept story_owner persistant campagne vivante définition",
+          "html": "<p>Un <strong>story_cycle</strong> est un objet persistant attaché à un personnage — le <code>story_owner</code>. Il survit aux sauvegardes, stocke des variables partagées accessibles depuis n'importe quel event, et déclenche des hooks à la création, à la fin et à la mort de l'owner.</p><div class='grid two'><div class='card'><h3>story_cycle vs event simple</h3><p>Un event simple se déclenche, se résout et est oublié. Un story_cycle vit : il mémorise les acteurs, suit l'état de la campagne et peut déclencher de nouveaux events des années plus tard, depuis un unique objet ancré.</p></div><div class='card'><h3>Ce qu'il contient</h3><ul><li>Un <strong>story_owner</strong> (l'ancre de la campagne)</li><li><strong>Variables</strong> : acteurs, artefacts, compteurs de stage</li><li><strong>Hooks</strong> : <code>on_setup</code>, <code>on_end</code>, <code>on_owner_death</code></li><li><strong>effect_groups</strong> optionnels pour les timers récurrents</li></ul></div></div><div class='callout'>Une campagne = un story_cycle = un story_owner. Tout le reste orbite autour de cette ancre.</div>"
         },
         {
           "id": "architecture",
-          "title": "2. Architecture de fichiers",
+          "track": "story-cycle",
+          "title": "2. Structure de fichiers",
           "kicker": "Structure",
-          "keywords": "architecture folders events scripted effects triggers localization modifiers",
-          "html": "<p>La structure minimale propre : events, scripted effects, scripted triggers et localisation. Ajoute d’autres dossiers seulement quand la mécanique existe.</p>",
-          "code": "events/\n  my_story_events.txt\n\ncommon/scripted_effects/\n  my_story_effects.txt\n\ncommon/scripted_triggers/\n  my_story_triggers.txt\n\nlocalization/english/\n  my_story_l_english.yml"
+          "keywords": "architecture dossiers events scripted effects triggers localization modifiers story_cycles",
+          "html": "<p>Un story_cycle minimal nécessite quatre fichiers. Ajoute d'autres dossiers seulement quand la mécanique existe.</p>",
+          "code": "common/story_cycles/\n  wc_my_path.txt        # déclaration du story_type\n\nevents/\n  wc_my_path_events.txt\n\ncommon/scripted_effects/\n  wc_my_path_effects.txt\n\ncommon/scripted_triggers/\n  wc_my_path_triggers.txt\n\nlocalization/english/\n  wc_my_path_l_english.yml"
         },
         {
-          "id": "schema",
-          "title": "3. Flux global d’un scénario",
-          "kicker": "Carte mentale",
-          "keywords": "schema diagram flow scenario narrative pipeline",
-          "diagram": "SETUP HIDDEN\n  ↓ crée story + owner + flags globaux\nINTRO VISIBLE\n  ↓ présente le conflit\nCHOIX MAJEUR\n  ├─ voie canonique → récompenses + story stage\n  └─ voie alternative → flags + risques + nouveaux events\nCYCLE\n  ↓ cooldown / voyage / infiltration / enquête\nRÉSOLUTION\n  ├─ fin canonique\n  └─ divergence non-canon"
+          "id": "story-type-decl",
+          "track": "story-cycle",
+          "title": "3. Déclarer le story_type",
+          "kicker": "Déclaration",
+          "keywords": "story_type déclarer on_setup on_end on_owner_death common story_cycles hooks",
+          "html": "<p>Chaque story_cycle commence par une déclaration dans <code>common/story_cycles/</code>. L'identifiant dans le fichier (<code>story_my_path = { ... }</code>) est ce qu'on passe à <code>create_story</code>. Trois hooks sont disponibles — seul <code>on_setup</code> est obligatoire.</p><div class='grid three'><div class='card'><h3><code>on_setup</code></h3><p>Se déclenche immédiatement quand <code>create_story</code> est appelé. Initialise les variables et lance le premier event. <code>story_owner</code> est disponible en scope.</p></div><div class='card'><h3><code>on_end</code></h3><p>Se déclenche quand <code>end_story</code> est appelé. Nettoie les variables et modificateurs. Obligatoire pour l'hygiène mémoire.</p></div><div class='card'><h3><code>on_owner_death</code></h3><p>Se déclenche à la mort du story_owner. Appelle généralement <code>end_story</code>, mais peut transférer l'ownership.</p></div></div>",
+          "snippet": "story-type-decl"
         },
         {
-          "id": "event",
-          "title": "4. Cycle de vie d’un event",
-          "kicker": "Pattern central",
-          "keywords": "event lifecycle immediate option after hidden trigger_event days",
-          "html": "<div class='grid three'><div class='card'><h3><code>trigger</code></h3><p>Conditions d’existence. Ne lance pas un event si l’acteur clé est mort ou manquant.</p></div><div class='card'><h3><code>immediate</code></h3><p>Prépare scopes, variables, recherches et tooltips. Évite les conséquences irréversibles ici.</p></div><div class='card'><h3><code>option</code></h3><p>Applique ce que le joueur ou l’IA choisit réellement.</p></div></div>",
-          "snippet": "event"
+          "id": "story-setup",
+          "track": "story-cycle",
+          "title": "4. L'event setup caché — create_story",
+          "kicker": "Démarrage de campagne",
+          "keywords": "create_story global_var setup caché event garde anti-duplication story_owner ancre global_variable_list flag",
+          "html": "<p>L'event setup est un event hidden avec <code>scope = none</code>. Il se déclenche une seule fois, crée la story sur l'owner de la campagne, l'ancre dans une <code>global_var</code> pour que tout event différé puisse y accéder, puis lance le premier event visible.</p><div class='grid two'><div class='card'><h3>Garde simple</h3><p><code>NOT = { has_global_variable = wc_my_path_story }</code> — empêche la recréation de la story lors d'un rechargement. Rapide et lisible.</p></div><div class='card'><h3>Garde robuste (préféré)</h3><p><code>is_in_global_list { variable = wc_events_happened  target = flag:my_path_started }</code> — une seule liste partagée suit tous les events de campagne. Plus économe qu'une variable par story.</p></div></div>",
+          "multiSnippets": [
+            [
+              "Event setup",
+              "cycle-setup"
+            ],
+            [
+              "Garde global list",
+              "global-list-guard"
+            ]
+          ]
         },
         {
           "id": "scopes",
-          "title": "5. Scopes : le centre du debug",
+          "track": "story-cycle",
+          "title": "5. Scopes et variables persistantes",
           "kicker": "Fiabilité",
-          "keywords": "scope root this save_scope_as delayed event actor artifact",
-          "html": "<p>Les scénarios longs cassent surtout parce qu’un scope n’existe plus. Utilise les scopes temporaires pour la chaîne actuelle, et les variables de story pour l’état long.</p><div class='grid two'><div class='card'><h3>Temporaire</h3><p><code>save_scope_as</code> est bon dans la chaîne courante. Fragile après un event différé.</p></div><div class='card'><h3>Persistant</h3><p><code>scope:story.var:actor</code> est plus sûr pour cycles, voyages, triggers différés et fallbacks.</p></div></div>",
+          "keywords": "scope root this save_scope_as event différé acteur artefact story var persistant",
+          "html": "<p>La plupart des bugs de campagne viennent d'un scope qui n'existe plus. Utilise les scopes temporaires pour la chaîne d'events actuelle, et les variables de story pour l'état qui doit survivre à n'importe quel event.</p><div class='grid two'><div class='card'><h3>Temporaire</h3><p><code>save_scope_as</code> est sûr dans la chaîne d'events actuelle. Devient fragile après un event différé ou un cycle sauvegarde/chargement.</p></div><div class='card'><h3>Persistant</h3><p><code>scope:story.var:actor</code> survit aux délais, sauvegardes et rechargements. Utilise-le pour tout acteur ou valeur dont la campagne dépend.</p></div></div>",
           "snippet": "registry"
         },
         {
           "id": "state",
-          "title": "6. État de story",
-          "kicker": "State machine",
-          "keywords": "story state machine stage variable flag canon alternate",
-          "html": "<p>Utilise un stage numérique pour la progression linéaire et des flags pour les états booléens. Ajoute des flags anti-farm aux récompenses alternatives.</p>",
+          "track": "story-cycle",
+          "title": "6. Machine à états de la campagne",
+          "kicker": "Suivi d'état",
+          "keywords": "story état machine stage variable flag canon alternatif anti-farm",
+          "html": "<p>Utilise un <code>story_stage</code> numérique pour la progression linéaire et des character flags pour les états booléens. Ajoute des flags anti-farm aux récompenses alternatives pour empêcher la collecte répétée.</p>",
           "multiSnippets": [
             [
-              "Stage",
+              "Compteur de stage",
               "stage"
             ],
             [
@@ -416,44 +541,123 @@
           ]
         },
         {
-          "id": "story-cycle",
-          "title": "7. Story cycles : scénarios vivants réutilisables",
-          "kicker": "Campagne vivante",
-          "keywords": "story cycle story owner create_story variable cooldown on_trigger_fail recurring",
-          "html": "<p>Le modèle le plus solide : un setup hidden crée la story, l’owner porte la campagne, les acteurs sont enregistrés, puis des cycles déclenchent missions, enquêtes et résolutions.</p><div class='grid two'><div class='card'><h3>À copier</h3><ul><li><code>create_story</code> dans un setup hidden.</li><li><code>debug_log</code> au démarrage.</li><li><code>scope:story.var:*</code> pour les acteurs.</li><li><code>cooldown</code> pour les boucles.</li><li><code>on_trigger_fail</code> pour les fallbacks sûrs.</li></ul></div><div class='card'><h3>À éviter</h3><ul><li>Hardcoder partout le même personnage.</li><li>Relancer des boucles sans cooldown ou flags.</li><li>Mettre les conséquences de choix dans <code>immediate</code>.</li><li>Créer une campagne sans résolution.</li></ul></div></div>",
-          "diagram": "create_story\n  ↓\nstory_owner\n  ↓\nscope:story.var:actor_A / actor_B / target\n  ↓\nmission event / cooldown event / travel event\n  ↓\nvoie canonique OU voie alternative\n  ↓\nrésolution OU fallback"
+          "id": "event",
+          "track": "story-cycle",
+          "title": "7. Cycle de vie d'un event : trigger / immediate / option",
+          "kicker": "Pattern d'event",
+          "keywords": "event cycle de vie immediate option after hidden trigger_event days character_event",
+          "html": "<div class='grid three'><div class='card'><h3><code>trigger</code></h3><p>Conditions d'existence. Ne lance pas l'event si l'acteur clé est mort ou si la story n'existe plus.</p></div><div class='card'><h3><code>immediate</code></h3><p>Prépare scopes, variables et tooltips. Évite les conséquences irréversibles ici — mets-les dans les options.</p></div><div class='card'><h3><code>option</code></h3><p>Applique ce que le joueur ou l'IA choisit. C'est ici qu'appartiennent les conséquences.</p></div></div>",
+          "snippet": "event"
+        },
+        {
+          "id": "stage-gates",
+          "track": "story-cycle",
+          "title": "8. Enchaîner les events avec des gates de stage",
+          "kicker": "Séquençage",
+          "keywords": "stage gate chaîne trigger_event story_stage séquençage branchement global_var différé",
+          "html": "<p>Un gate de stage garantit que les events se déclenchent dans le bon ordre. Un event conditionné à <code>story_stage >= 2</code> ne se lancera jamais avant que le stage 1 soit résolu, évitant les déclenchements dans le désordre.</p><div class='callout'>Pour accéder à l'état de story depuis un event différé — où <code>scope:story</code> peut ne plus être disponible — utilise l'ancre <code>global_var</code> : <code>global_var:my_path_story = { var:story_stage >= 2 }</code>.</div>",
+          "snippet": "cycle-stage"
+        },
+        {
+          "id": "effect-group",
+          "track": "story-cycle",
+          "title": "9. effect_group : timers récurrents",
+          "kicker": "Logique récurrente",
+          "keywords": "effect_group timer récurrent years triggered_effect périodique champion mort détection",
+          "html": "<p>Les blocs <code>effect_group</code> vivent dans la déclaration du story_type. Ils se déclenchent automatiquement à intervalle fixe tant que la story est active. Pour les patterns probabilistes ou multi-branches, voir <em>Annexe B</em>.</p><div class='grid two'><div class='card'><h3>Bons usages</h3><ul><li>Vérification périodique du statut du champion</li><li>Évaluation des gates de progression de campagne</li><li>Mises à jour de modificateurs ou d'environnement</li><li>Escalade de crise basée sur le temps</li></ul></div><div class='card'><h3>Pièges</h3><ul><li>Garde la logique légère : délègue à un event hidden, pas inline</li><li>Évite des intervalles inférieurs à 1 an sur des stories actives (performance)</li><li>Utilise toujours <code>triggered_effect</code> avec une garde, sinon l'effet se déclenche inconditionnellement</li></ul></div></div>",
+          "snippet": "effect-group-timer"
+        },
+        {
+          "id": "artifacts",
+          "track": "story-cycle",
+          "title": "10. Champions et artefacts",
+          "kicker": "Objets et mort",
+          "keywords": "artefact champion every_character_artifact set_owner end_story is_dead artefact clé",
+          "html": "<p>Ne suppose jamais qu'un artefact appartient encore au bon personnage. Recherche-le toujours avec <code>every_character_artifact</code>, vérifie son existence, puis transfère-le ou récupère-le. Les champions suivent le même pattern défensif : vérifie <code>is_dead</code> avant d'agir.</p>",
+          "multiSnippets": [
+            [
+              "Mort du champion",
+              "cycle-champion"
+            ],
+            [
+              "Transfert d'artefact",
+              "artifact"
+            ]
+          ]
+        },
+        {
+          "id": "debug",
+          "track": "story-cycle",
+          "title": "11. Matrice de debug",
+          "kicker": "Symptôme → cause",
+          "keywords": "debug error log symptôme cause scope guerre event boucle localisation yml story_type",
+          "html": "<div class='grid two'><div class='card'><h3>L'event ne se déclenche pas</h3><p>Vérifie <code>trigger</code>, story scope absent, acteur mort ou manquant, mauvais receiver.</p></div><div class='card'><h3>La story ne se crée pas</h3><p>Le nom du story_type est incorrect : il doit correspondre exactement à l'identifiant dans <code>common/story_cycles/</code>.</p></div><div class='card'><h3>La boucle se répète indéfiniment</h3><p>Cooldown ou flag de garde manquant. Ajoute <code>debug_log</code> en tête de l'event de boucle pour compter les déclenchements.</p></div><div class='card'><h3>La guerre ne démarre pas</h3><p>Mauvais CB, relation de liege invalide, attaquant non landed, ou cible qui ne valide pas.</p></div><div class='card'><h3>Le texte affiche la clé au lieu du texte</h3><p>Fichier <code>.yml</code> absent ou malformé. Vérifie l'encodage UTF-8 BOM et l'indentation (un espace en début de chaque ligne).</p></div><div class='card'><h3>Gate de stage ignoré</h3><p><code>scope:story</code> n'est pas disponible dans les events différés — utilise <code>global_var:my_path_story</code> pour lire les variables depuis l'extérieur du story scope.</p></div></div>"
+        },
+        {
+          "id": "story-cycle-example",
+          "track": "story-cycle",
+          "title": "12. Exemple complet : anatomie de wc_path_of_the_damned",
+          "kicker": "Exemple concret",
+          "keywords": "story_cycle namespace champion global_var story_stage end_story duel prowess path_of_the_damned warcraft exemple complet",
+          "html": "<p>Le namespace <code>wc_path_of_the_damned</code> est un story_cycle complet issu d'un vrai mod Warcraft. Ses plages d'events suivent une convention de nommage qui s'adapte bien aux grandes campagnes. Tous les patterns des sections 3 à 10 apparaissent ici en contexte.</p><div class='grid three'><div class='card'><h3>0000 — Setup</h3><p>Events hidden : <code>create_story</code>, enregistre le story_owner, ancre la story dans une <code>global_var</code>, pose <code>story_stage = 1</code>.</p></div><div class='card'><h3>0100 — Champions</h3><p>Events hidden déclenchés par <code>effect_group</code> : détecte la mort du champion, transfère Frostmourne via <code>every_character_artifact</code>, appelle <code>end_story</code>.</p></div><div class='card'><h3>1000 — Main story</h3><p>Events narratifs visibles : choix multi-options, gates <code>story_stage</code>, branches narratives.</p></div><div class='card'><h3>1900 — Utilitaires</h3><p>Events hidden à effets secondaires : spawn d'armées via <code>scripted_effect</code>, modificateurs, conséquences du setup.</p></div><div class='card'><h3>2000 — Duels</h3><p>Events de combat avec <code>duel { skill = prowess }</code>, résultats pondérés, effets de mort nommés.</p></div></div><div class='callout'>Ancre <code>global_var</code> : <code>set_global_variable { name = my_path_story  value = scope:story }</code> — tout event différé lit l'état via <code>global_var:my_path_story</code> sans avoir besoin d'un <code>scope:story</code> actif.</div>",
+          "multiSnippets": [
+            [
+              "Event setup",
+              "cycle-setup"
+            ],
+            [
+              "Gate de stage",
+              "cycle-stage"
+            ],
+            [
+              "Champion",
+              "cycle-champion"
+            ]
+          ]
+        },
+        {
+          "id": "visualization",
+          "track": "reference",
+          "title": "A. Panneau de visualisation de story",
+          "kicker": "Panneau UI",
+          "keywords": "visualization visible icon custom_string_key character basic_counter tug_of_war_counter modifiers traits decisions panneau UI",
+          "html": "<p>Ajoute <code>visible = yes</code> pour exposer la story dans le panneau de story du personnage. Le bloc <code>visualization</code> contrôle ce que le panneau affiche : personnages suivis, barres de progression, modificateurs actifs, traits ou décisions. Tous les labels référencent des clés de localisation.</p><div class='grid two'><div class='card'><h3>Widgets disponibles</h3><ul><li><code>character</code> — personnage suivi avec label</li><li><code>character_list</code> — liste de personnages</li><li><code>basic_counter</code> — barre de progression min/max</li><li><code>tug_of_war_counter</code> — barre bidirectionnelle (min négatif)</li><li><code>modifiers</code> — liste de modificateurs actifs</li><li><code>traits</code> / <code>decisions</code> — affichés si présents</li><li><code>custom_string_key</code> — chaîne de localisation libre</li></ul></div><div class='card'><h3>À noter</h3><ul><li>Tous les <code>variable_name</code> référencent des variables de story (<code>scope:story.var:*</code>)</li><li><code>label</code> est une clé de localisation, pas une chaîne simple</li><li>Le panneau s'affiche uniquement pendant que la story est active</li><li>Utilise <code>icon</code> avec <code>trigger</code> pour changer d'icône dynamiquement</li></ul></div></div>",
+          "snippet": "viz-block"
+        },
+        {
+          "id": "effect-group-advanced",
+          "track": "reference",
+          "title": "B. Patterns avancés d'effect_group",
+          "kicker": "effect_group en profondeur",
+          "keywords": "effect_group first_valid chance probabilité intervalle aléatoire days min max on_action months years",
+          "html": "<p>Au-delà du timer fixe de base, <code>effect_group</code> supporte des intervalles aléatoires, des gates de probabilité et une sélection multi-branches.</p><div class='grid three'><div class='card'><h3>Intervalle aléatoire</h3><p><code>days = { 30 60 }</code> ou <code>years = { 1 3 }</code> — se déclenche après un nombre aléatoire de jours/années dans la plage. Évite que toutes les stories se déclenchent sur le même tick.</p></div><div class='card'><h3><code>chance</code></h3><p>Entier 0–100. L'effect_group ne se déclenche que si le tirage réussit. Absent = 100 (toujours déclenché si le trigger passe).</p></div><div class='card'><h3><code>first_valid</code></h3><p>Encapsule plusieurs blocs <code>triggered_effect</code>. Seul le premier dont le trigger est vrai se déclenche. Utilise pour les chaînes de priorité : vérifier mort → vérifier blessé → fallback.</p></div></div><div class='callout'><code>on_action</code> dans l'effet : <code>trigger_event = { on_action = my_pool }</code> — tire un event aléatoire dans le pool on_action plutôt que de hardcoder un ID. Ajoute de la variété sans effect_groups supplémentaires.</div>",
+          "snippet": "effect-group-advanced"
         },
         {
           "id": "war",
-          "title": "8. Guerre directe ou faction ?",
+          "track": "reference",
+          "title": "C. Guerre — directe ou faction ?",
           "kicker": "Logique de guerre",
-          "keywords": "war casus belli cb independence_war independence_faction_war faction start_war",
-          "html": "<div class='grid two'><div class='card'><h3>Guerre directe</h3><p>Un personnage attaque maintenant. Utilise un CB individuel qui valide attaquant et défenseur.</p></div><div class='card'><h3>Faction</h3><p>La pression politique monte d’abord. La guerre vient du système de faction.</p></div></div>",
+          "keywords": "guerre casus belli cb independence_war independence_faction_war faction start_war",
+          "html": "<div class='grid two'><div class='card'><h3>Guerre directe</h3><p>Un personnage attaque immédiatement. Utilise un CB individuel qui valide attaquant et défenseur.</p></div><div class='card'><h3>Faction</h3><p>La pression politique monte d'abord. La guerre vient du système de faction quand la tension atteint son pic.</p></div></div>",
           "multiSnippets": [
             [
-              "Direct war",
+              "Guerre directe",
               "directwar"
             ],
             [
-              "Faction pressure",
+              "Pression de faction",
               "factionwar"
             ]
           ]
         },
         {
-          "id": "artifacts",
-          "title": "9. Artefacts et objets uniques",
-          "kicker": "Possession",
-          "keywords": "artifact frostmourne owner claim set_owner variable",
-          "html": "<p>Ne suppose jamais que l’artefact appartient encore au bon personnage. Recherche-le, vérifie son existence, puis transfère-le ou ajoute une claim.</p>",
-          "snippet": "artifact"
-        },
-        {
-          "id": "debug",
-          "title": "10. Matrice de debug",
-          "kicker": "Symptôme → cause",
-          "keywords": "debug error log symptom cause scope war event loop",
-          "html": "<div class='grid two'><div class='card'><h3>L’event ne se lance pas</h3><p>Vérifie <code>trigger</code>, story scope absent, acteur manquant, mauvais receiver.</p></div><div class='card'><h3>La guerre ne démarre pas</h3><p>Mauvais CB, relation de liege invalide, attaquant non landed, cible invalide.</p></div><div class='card'><h3>La boucle se répète</h3><p>Cooldown manquant, flag manquant, aucun état terminal.</p></div><div class='card'><h3>Mauvaise variante de texte</h3><p>Ordre <code>first_valid</code> mauvais ou trigger trop large.</p></div></div>"
+          "id": "schema",
+          "track": "reference",
+          "title": "D. Flux global d'un scénario",
+          "kicker": "Carte mentale",
+          "keywords": "schema diagram flux scénario narrative pipeline vue d'ensemble global",
+          "diagram": "DÉCLARER le story_type\n  common/story_cycles/wc_my_path.txt\n    ↓\nEVENT SETUP HIDDEN  (scope = none)\n  create_story → ancre global_var → story_stage = 1\n    ↓\nINTRO VISIBLE\n  présente le conflit, introduit les acteurs\n    ↓\nCHOIX MAJEUR\n  ├─ voie canonique → récompenses + story_stage++\n  └─ voie alternative → flags + risques + nouveaux events\n    ↓\nTIMER EFFECT_GROUP  (arrière-plan)\n  check champion / progression / environnement tous les N jours\n    ↓\nRÉSOLUTION\n  ├─ fin canonique → end_story\n  └─ divergence non-canon → flag + résolution alternative"
         }
       ],
       "recipesTitle": "Bibliothèque de recettes",
@@ -621,7 +825,11 @@
         "Cooldown ou flag empêche les boucles",
         "Fallback prévu si acteur mort/manquant",
         "error.log vérifié après le test"
-      ]
+      ],
+      "trackStoryLabel": "Guide Story Cycle",
+      "trackRefLabel": "Référence",
+      "tutorialTitle": "Story Cycle — Pas à Pas",
+      "tutorialIntro": "Un parcours guidé : de la déclaration d'un story_type à un story_cycle complet et fonctionnel. Lis chaque section dans l'ordre et applique-la directement dans ton mod."
     },
     "es": {
       "metaTitle": "CK3 Scenario Modding — Documentación útil",
@@ -630,7 +838,8 @@
       "tabs": {
         "docs": "Docs",
         "recipes": "Recetas",
-        "tools": "Herramientas"
+        "tools": "Herramientas",
+        "tutorial": "Tutorial"
       },
       "search": "Buscar: / y luego scope, guerra, actor…",
       "theme": "Cambiar claro/oscuro",
@@ -664,52 +873,68 @@
       ],
       "docsSections": [
         {
-          "id": "core-patterns",
-          "title": "1. Flujo de trabajo principal",
-          "kicker": "Workflow rápido",
-          "keywords": "workflow principal prioridad prototipo escenario backlog",
-          "html": "<div class='grid three'><div class='card'><h3>1 actor central</h3><p>Cada campaña necesita un <strong>story_owner</strong>. Los demás personajes orbitan a su alrededor.</p></div><div class='card'><h3>1 estado persistente</h3><p>Guarda actores y objetivos importantes en <code>scope:story.var:*</code>, no solo en scopes temporales.</p></div><div class='card'><h3>1 consecuencia fuerte</h3><p>Cada opción importante debe hacer claramente una cosa: guerra, artefacto, viaje, scheme, muerte, conversión.</p></div></div><div class='callout warn'>Regla de equipo: añade una mecánica, pruébala en juego, revisa <code>error.log</code> y luego añade la siguiente.</div>"
+          "id": "concept",
+          "track": "story-cycle",
+          "title": "1. ¿Qué es un story_cycle?",
+          "kicker": "Concepto base",
+          "keywords": "story cycle concepto story_owner persistente campaña viva definición",
+          "html": "<p>Un <strong>story_cycle</strong> es un objeto persistente vinculado a un personaje — el <code>story_owner</code>. Sobrevive a guardados y cargas, almacena variables compartidas accesibles desde cualquier evento, y dispara hooks al crearse, al terminar y cuando el owner muere.</p><div class='grid two'><div class='card'><h3>story_cycle vs evento independiente</h3><p>Un evento independiente se dispara, se resuelve y se olvida. Un story_cycle vive: recuerda actores, rastrea el estado de la campaña y puede disparar nuevos eventos años después — todo desde un único objeto anclado.</p></div><div class='card'><h3>Qué contiene</h3><ul><li>Un <strong>story_owner</strong> (el ancla de la campaña)</li><li><strong>Variables</strong>: actores, artefactos, contadores de etapa</li><li><strong>Hooks</strong>: <code>on_setup</code>, <code>on_end</code>, <code>on_owner_death</code></li><li><strong>effect_groups</strong> opcionales para temporizadores recurrentes</li></ul></div></div><div class='callout'>Una campaña = un story_cycle = un story_owner. Todo lo demás orbita alrededor de ese ancla.</div>"
         },
         {
           "id": "architecture",
-          "title": "2. Arquitectura de archivos",
+          "track": "story-cycle",
+          "title": "2. Estructura de archivos",
           "kicker": "Estructura",
-          "keywords": "architecture folders events scripted effects triggers localization modifiers",
-          "html": "<p>La estructura mínima limpia: events, scripted effects, scripted triggers y localización. Añade más carpetas solo cuando la mecánica exista.</p>",
-          "code": "events/\n  my_story_events.txt\n\ncommon/scripted_effects/\n  my_story_effects.txt\n\ncommon/scripted_triggers/\n  my_story_triggers.txt\n\nlocalization/english/\n  my_story_l_english.yml"
+          "keywords": "arquitectura carpetas eventos scripted effects triggers localización modificadores story_cycles",
+          "html": "<p>Un story_cycle mínimo necesita cuatro archivos. Añade más carpetas solo cuando la mecánica exista.</p>",
+          "code": "common/story_cycles/\n  wc_my_path.txt        # declaración del story_type\n\nevents/\n  wc_my_path_events.txt\n\ncommon/scripted_effects/\n  wc_my_path_effects.txt\n\ncommon/scripted_triggers/\n  wc_my_path_triggers.txt\n\nlocalization/english/\n  wc_my_path_l_english.yml"
         },
         {
-          "id": "schema",
-          "title": "3. Flujo global de un escenario",
-          "kicker": "Mapa mental",
-          "keywords": "schema diagram flow scenario narrative pipeline",
-          "diagram": "SETUP HIDDEN\n  ↓ crea story + owner + flags globales\nINTRO VISIBLE\n  ↓ presenta el conflicto\nELECCIÓN MAYOR\n  ├─ ruta canónica → recompensas + story stage\n  └─ ruta alternativa → flags + riesgos + nuevos events\nCICLO\n  ↓ cooldown / viaje / infiltración / investigación\nRESOLUCIÓN\n  ├─ final canónico\n  └─ divergencia no canónica"
+          "id": "story-type-decl",
+          "track": "story-cycle",
+          "title": "3. Declarar el story_type",
+          "kicker": "Declaración",
+          "keywords": "story_type declarar on_setup on_end on_owner_death common story_cycles hooks",
+          "html": "<p>Cada story_cycle comienza con una declaración en <code>common/story_cycles/</code>. El identificador en el archivo (<code>story_my_path = { ... }</code>) es lo que se pasa a <code>create_story</code>. Hay tres hooks disponibles — solo <code>on_setup</code> es obligatorio.</p><div class='grid three'><div class='card'><h3><code>on_setup</code></h3><p>Se dispara inmediatamente cuando se llama a <code>create_story</code>. Inicializa variables y dispara el primer evento. <code>story_owner</code> está disponible en scope.</p></div><div class='card'><h3><code>on_end</code></h3><p>Se dispara cuando se llama a <code>end_story</code>. Limpia variables y modificadores. Necesario para la higiene de memoria.</p></div><div class='card'><h3><code>on_owner_death</code></h3><p>Se dispara cuando muere el story_owner. Normalmente llama a <code>end_story</code>, pero puede transferir la propiedad.</p></div></div>",
+          "snippet": "story-type-decl"
         },
         {
-          "id": "event",
-          "title": "4. Ciclo de vida de un event",
-          "kicker": "Patrón central",
-          "keywords": "event lifecycle immediate option after hidden trigger_event days",
-          "html": "<div class='grid three'><div class='card'><h3><code>trigger</code></h3><p>Condiciones de existencia. No abras un event si el actor clave está muerto o falta.</p></div><div class='card'><h3><code>immediate</code></h3><p>Prepara scopes, variables, búsquedas y tooltips. Evita consecuencias irreversibles aquí.</p></div><div class='card'><h3><code>option</code></h3><p>Aplica lo que el jugador o la IA elige realmente.</p></div></div>",
-          "snippet": "event"
+          "id": "story-setup",
+          "track": "story-cycle",
+          "title": "4. El evento de configuración oculto — create_story",
+          "kicker": "Inicio de campaña",
+          "keywords": "create_story global_var setup oculto evento guardia anti-duplicación story_owner ancla global_variable_list flag",
+          "html": "<p>El evento de configuración se dispara una sola vez con <code>scope = none</code>. Crea la story en el owner de la campaña, la ancla en una <code>global_var</code> para acceso diferido, y luego dispara el primer evento visible.</p><div class='grid two'><div class='card'><h3>Guardia simple</h3><p><code>NOT = { has_global_variable = wc_my_path_story }</code> — previene recrear la story en guardado/carga. Rápido y legible.</p></div><div class='card'><h3>Guardia robusta (preferida)</h3><p><code>is_in_global_list { variable = wc_events_happened  target = flag:my_path_started }</code> — una lista compartida rastrea todos los eventos de campaña. Más económico que una variable por story.</p></div></div>",
+          "multiSnippets": [
+            [
+              "Evento setup",
+              "cycle-setup"
+            ],
+            [
+              "Guardia global list",
+              "global-list-guard"
+            ]
+          ]
         },
         {
           "id": "scopes",
-          "title": "5. Scopes: el centro del debug",
+          "track": "story-cycle",
+          "title": "5. Scopes y variables persistentes",
           "kicker": "Fiabilidad",
-          "keywords": "scope root this save_scope_as delayed event actor artifact",
-          "html": "<p>Los escenarios largos suelen romperse porque un scope ya no existe. Usa scopes temporales para la cadena actual y variables de story para estado persistente.</p><div class='grid two'><div class='card'><h3>Temporal</h3><p><code>save_scope_as</code> sirve dentro de la cadena actual. Es frágil tras eventos diferidos.</p></div><div class='card'><h3>Persistente</h3><p><code>scope:story.var:actor</code> es más seguro para ciclos, viajes, triggers diferidos y fallbacks.</p></div></div>",
+          "keywords": "scope root this save_scope_as evento diferido actor artefacto story var persistente",
+          "html": "<p>La mayoría de los bugs de campaña ocurren porque un scope ya no existe. Usa scopes temporales para la cadena de eventos actual, y variables de story para el estado que debe sobrevivir a cualquier evento.</p><div class='grid two'><div class='card'><h3>Temporal</h3><p><code>save_scope_as</code> es seguro dentro de la cadena de eventos actual. Se vuelve poco fiable después de eventos diferidos o ciclos de guardado/carga.</p></div><div class='card'><h3>Persistente</h3><p><code>scope:story.var:actor</code> sobrevive a retrasos, guardados y cargas. Úsalo para cualquier actor o valor del que dependa la campaña.</p></div></div>",
           "snippet": "registry"
         },
         {
           "id": "state",
-          "title": "6. Estado de story",
-          "kicker": "State machine",
-          "keywords": "story state machine stage variable flag canon alternate",
-          "html": "<p>Usa un stage numérico para progresión lineal y flags para estados booleanos. Añade flags anti-farm a recompensas alternativas.</p>",
+          "track": "story-cycle",
+          "title": "6. Máquina de estados de la campaña",
+          "kicker": "Seguimiento de estado",
+          "keywords": "story estado máquina stage variable flag canon alternativo anti-farm",
+          "html": "<p>Usa un <code>story_stage</code> numérico para la progresión lineal y character flags para estados booleanos. Añade flags anti-farm a las recompensas alternativas para evitar la recolección repetida.</p>",
           "multiSnippets": [
             [
-              "Stage",
+              "Contador de stage",
               "stage"
             ],
             [
@@ -719,44 +944,123 @@
           ]
         },
         {
-          "id": "story-cycle",
-          "title": "7. Story cycles: escenarios vivos reutilizables",
-          "kicker": "Campaña viva",
-          "keywords": "story cycle story owner create_story variable cooldown on_trigger_fail recurring",
-          "html": "<p>El modelo más sólido: un setup hidden crea la story, el owner sostiene la campaña, los actores se registran y los ciclos disparan misiones, investigaciones y resoluciones.</p><div class='grid two'><div class='card'><h3>Copia esto</h3><ul><li><code>create_story</code> en un setup hidden.</li><li><code>debug_log</code> al inicio.</li><li><code>scope:story.var:*</code> para actores.</li><li><code>cooldown</code> para bucles.</li><li><code>on_trigger_fail</code> para fallbacks seguros.</li></ul></div><div class='card'><h3>Evita esto</h3><ul><li>Hardcodear el mismo personaje por todas partes.</li><li>Reiniciar bucles sin cooldown o flags.</li><li>Poner consecuencias de elección en <code>immediate</code>.</li><li>Crear una campaña sin resolución.</li></ul></div></div>",
-          "diagram": "create_story\n  ↓\nstory_owner\n  ↓\nscope:story.var:actor_A / actor_B / target\n  ↓\nmission event / cooldown event / travel event\n  ↓\nruta canónica O ruta alternativa\n  ↓\nresolución O fallback"
+          "id": "event",
+          "track": "story-cycle",
+          "title": "7. Ciclo de vida de un evento: trigger / immediate / option",
+          "kicker": "Patrón de evento",
+          "keywords": "evento ciclo de vida immediate option after hidden trigger_event days character_event",
+          "html": "<div class='grid three'><div class='card'><h3><code>trigger</code></h3><p>Condiciones de existencia. No abrir el evento si el actor clave está muerto o la story ha desaparecido.</p></div><div class='card'><h3><code>immediate</code></h3><p>Prepara scopes, variables y tooltips. Evita consecuencias irreversibles aquí — ponlas en las opciones.</p></div><div class='card'><h3><code>option</code></h3><p>Aplica lo que el jugador o la IA elige. Aquí pertenecen las consecuencias.</p></div></div>",
+          "snippet": "event"
+        },
+        {
+          "id": "stage-gates",
+          "track": "story-cycle",
+          "title": "8. Encadenar eventos con gates de stage",
+          "kicker": "Secuenciación",
+          "keywords": "stage gate cadena trigger_event story_stage secuenciación ramificación global_var diferido",
+          "html": "<p>Un gate de stage garantiza que los eventos se disparen en el orden correcto. Un evento condicionado a <code>story_stage >= 2</code> nunca se disparará antes de que el stage 1 esté resuelto, evitando disparos fuera de orden.</p><div class='callout'>Para acceder al estado de story desde un evento diferido — donde <code>scope:story</code> puede no estar disponible — usa el ancla <code>global_var</code>: <code>global_var:my_path_story = { var:story_stage >= 2 }</code>.</div>",
+          "snippet": "cycle-stage"
+        },
+        {
+          "id": "effect-group",
+          "track": "story-cycle",
+          "title": "9. effect_group: temporizadores recurrentes",
+          "kicker": "Lógica recurrente",
+          "keywords": "effect_group temporizador recurrente years triggered_effect periódico campeón muerte detección",
+          "html": "<p>Los bloques <code>effect_group</code> viven dentro de la declaración del story_type. Se disparan automáticamente en un intervalo fijo mientras la story está activa. Para patrones probabilísticos o multi-rama, ver <em>Apéndice B</em>.</p><div class='grid two'><div class='card'><h3>Buenos usos</h3><ul><li>Verificación periódica del estado del campeón</li><li>Evaluación de gates de progresión de campaña</li><li>Actualizaciones de modificadores o entorno</li><li>Escalada de crisis basada en tiempo</li></ul></div><div class='card'><h3>Trampas</h3><ul><li>Mantén la lógica ligera: delega a un evento oculto, no inline</li><li>Evita intervalos inferiores a 1 año en stories activas (rendimiento)</li><li>Usa siempre <code>triggered_effect</code> con una guarda, o el efecto se dispara incondicionalmente</li></ul></div></div>",
+          "snippet": "effect-group-timer"
+        },
+        {
+          "id": "artifacts",
+          "track": "story-cycle",
+          "title": "10. Campeones y artefactos",
+          "kicker": "Objetos y muerte",
+          "keywords": "artefacto campeón every_character_artifact set_owner end_story is_dead artefacto clave",
+          "html": "<p>Nunca asumas que un artefacto sigue con el personaje esperado. Búscalo siempre con <code>every_character_artifact</code>, verifica que existe, y luego transfierelo o reclámalo. Los campeones siguen el mismo patrón defensivo: comprueba <code>is_dead</code> antes de actuar.</p>",
+          "multiSnippets": [
+            [
+              "Muerte del campeón",
+              "cycle-champion"
+            ],
+            [
+              "Transferencia de artefacto",
+              "artifact"
+            ]
+          ]
+        },
+        {
+          "id": "debug",
+          "track": "story-cycle",
+          "title": "11. Matriz de debug",
+          "kicker": "Síntoma → causa",
+          "keywords": "debug error log síntoma causa scope guerra evento bucle localización yml story_type",
+          "html": "<div class='grid two'><div class='card'><h3>El evento no se dispara</h3><p>Comprueba <code>trigger</code>, story scope ausente, actor muerto o faltante, receiver incorrecto.</p></div><div class='card'><h3>La story no se crea</h3><p>Nombre del story_type incorrecto: debe coincidir exactamente con el identificador en <code>common/story_cycles/</code>.</p></div><div class='card'><h3>El bucle se repite indefinidamente</h3><p>Cooldown o flag de guarda ausente. Añade <code>debug_log</code> al principio del evento de bucle para contar disparos.</p></div><div class='card'><h3>La guerra no comienza</h3><p>CB incorrecto, relación de liege inválida, atacante sin tierra, o objetivo que no valida.</p></div><div class='card'><h3>El texto muestra la clave en lugar del texto</h3><p>Archivo <code>.yml</code> ausente o malformado. Verifica la codificación UTF-8 BOM y la indentación (un espacio por línea).</p></div><div class='card'><h3>Gate de stage ignorado</h3><p><code>scope:story</code> no está disponible en eventos diferidos — usa <code>global_var:my_path_story</code> para leer variables desde fuera del story scope.</p></div></div>"
+        },
+        {
+          "id": "story-cycle-example",
+          "track": "story-cycle",
+          "title": "12. Ejemplo completo: anatomía de wc_path_of_the_damned",
+          "kicker": "Ejemplo concreto",
+          "keywords": "story_cycle namespace campeón global_var story_stage end_story duel prowess path_of_the_damned warcraft ejemplo completo",
+          "html": "<p>El namespace <code>wc_path_of_the_damned</code> es un story_cycle completo de un mod Warcraft real. Sus rangos de eventos siguen una convención de nomenclatura que escala bien en campañas grandes. Todos los patrones de las secciones 3 a 10 aparecen aquí en contexto.</p><div class='grid three'><div class='card'><h3>0000 — Setup</h3><p>Eventos ocultos: <code>create_story</code>, registra el story_owner, ancla la story en una <code>global_var</code>, establece <code>story_stage = 1</code>.</p></div><div class='card'><h3>0100 — Campeones</h3><p>Eventos ocultos disparados por <code>effect_group</code>: detecta la muerte del campeón, transfiere Frostmourne vía <code>every_character_artifact</code>, llama a <code>end_story</code>.</p></div><div class='card'><h3>1000 — Historia principal</h3><p>Eventos narrativos visibles: elecciones multi-opción, gates <code>story_stage</code>, ramas narrativas.</p></div><div class='card'><h3>1900 — Utilidades</h3><p>Eventos ocultos de efectos secundarios: invocar ejércitos vía <code>scripted_effect</code>, modificadores, consecuencias del setup.</p></div><div class='card'><h3>2000 — Duelos</h3><p>Eventos de combate con <code>duel { skill = prowess }</code>, resultados ponderados, efectos de muerte con nombre.</p></div></div><div class='callout'>Ancla <code>global_var</code>: <code>set_global_variable { name = my_path_story  value = scope:story }</code> — cualquier evento diferido lee el estado vía <code>global_var:my_path_story</code> sin necesitar un <code>scope:story</code> activo.</div>",
+          "multiSnippets": [
+            [
+              "Evento setup",
+              "cycle-setup"
+            ],
+            [
+              "Gate de stage",
+              "cycle-stage"
+            ],
+            [
+              "Campeón",
+              "cycle-champion"
+            ]
+          ]
+        },
+        {
+          "id": "visualization",
+          "track": "reference",
+          "title": "A. Panel de visualización de story",
+          "kicker": "Panel UI",
+          "keywords": "visualization visible icon custom_string_key character basic_counter tug_of_war_counter modifiers traits decisions panel UI",
+          "html": "<p>Añade <code>visible = yes</code> para exponer la story en el panel de story del personaje. El bloque <code>visualization</code> controla qué muestra el panel: personajes rastreados, barras de progreso, modificadores activos, traits o decisiones. Todas las etiquetas referencian claves de localización.</p><div class='grid two'><div class='card'><h3>Widgets disponibles</h3><ul><li><code>character</code> — personaje rastreado con etiqueta</li><li><code>character_list</code> — lista de personajes</li><li><code>basic_counter</code> — barra de progreso min/max</li><li><code>tug_of_war_counter</code> — barra bidireccional (min negativo)</li><li><code>modifiers</code> — lista de modificadores activos</li><li><code>traits</code> / <code>decisions</code> — mostrados si están presentes</li><li><code>custom_string_key</code> — cadena de localización libre</li></ul></div><div class='card'><h3>Notas</h3><ul><li>Todos los <code>variable_name</code> referencian variables de story (<code>scope:story.var:*</code>)</li><li><code>label</code> es una clave de localización, no una cadena simple</li><li>El panel solo se muestra mientras la story está activa</li><li>Usa <code>icon</code> con <code>trigger</code> para cambiar iconos dinámicamente</li></ul></div></div>",
+          "snippet": "viz-block"
+        },
+        {
+          "id": "effect-group-advanced",
+          "track": "reference",
+          "title": "B. Patrones avanzados de effect_group",
+          "kicker": "effect_group en profundidad",
+          "keywords": "effect_group first_valid chance probabilidad intervalo aleatorio days min max on_action months years",
+          "html": "<p>Más allá del temporizador fijo básico, <code>effect_group</code> admite intervalos aleatorios, puertas de probabilidad y selección multi-rama.</p><div class='grid three'><div class='card'><h3>Intervalo aleatorio</h3><p><code>days = { 30 60 }</code> o <code>years = { 1 3 }</code> — se dispara tras un número aleatorio de días/años en el rango. Evita que todas las stories se disparen en el mismo tick.</p></div><div class='card'><h3><code>chance</code></h3><p>Entero 0–100. El effect_group solo se dispara si el sorteo tiene éxito. Ausente = 100 (siempre se dispara si el trigger pasa).</p></div><div class='card'><h3><code>first_valid</code></h3><p>Envuelve múltiples bloques <code>triggered_effect</code>. Solo el primero cuyo trigger sea verdadero se dispara. Úsalo para cadenas de prioridad: verificar muerto → verificar herido → fallback.</p></div></div><div class='callout'><code>on_action</code> en el efecto: <code>trigger_event = { on_action = my_pool }</code> — extrae un evento aleatorio del pool on_action en lugar de hardcodear un ID. Añade variedad sin effect_groups adicionales.</div>",
+          "snippet": "effect-group-advanced"
         },
         {
           "id": "war",
-          "title": "8. ¿Guerra directa o facción?",
+          "track": "reference",
+          "title": "C. Guerra — ¿directa o facción?",
           "kicker": "Lógica de guerra",
-          "keywords": "war casus belli cb independence_war independence_faction_war faction start_war",
-          "html": "<div class='grid two'><div class='card'><h3>Guerra directa</h3><p>Un personaje ataca ahora. Usa un CB individual que valide atacante y defensor.</p></div><div class='card'><h3>Facción</h3><p>La presión política crece primero. La guerra viene del sistema de facciones.</p></div></div>",
+          "keywords": "guerra casus belli cb independence_war independence_faction_war facción start_war",
+          "html": "<div class='grid two'><div class='card'><h3>Guerra directa</h3><p>Un personaje ataca inmediatamente. Usa un CB individual que valide atacante y defensor.</p></div><div class='card'><h3>Facción</h3><p>La presión política aumenta primero. La guerra viene del sistema de facciones cuando la tensión alcanza su pico.</p></div></div>",
           "multiSnippets": [
             [
-              "Direct war",
+              "Guerra directa",
               "directwar"
             ],
             [
-              "Faction pressure",
+              "Presión de facción",
               "factionwar"
             ]
           ]
         },
         {
-          "id": "artifacts",
-          "title": "9. Artefactos y objetos únicos",
-          "kicker": "Propiedad",
-          "keywords": "artifact frostmourne owner claim set_owner variable",
-          "html": "<p>Nunca asumas que el artefacto sigue perteneciendo al personaje esperado. Búscalo, verifica que existe y luego transfiérelo o añade un claim.</p>",
-          "snippet": "artifact"
-        },
-        {
-          "id": "debug",
-          "title": "10. Matriz de debug",
-          "kicker": "Síntoma → causa",
-          "keywords": "debug error log symptom cause scope war event loop",
-          "html": "<div class='grid two'><div class='card'><h3>El event no dispara</h3><p>Revisa <code>trigger</code>, story scope ausente, actor faltante, receiver incorrecto.</p></div><div class='card'><h3>La guerra no empieza</h3><p>CB incorrecto, relación de liege inválida, atacante sin tierra, objetivo inválido.</p></div><div class='card'><h3>El bucle se repite</h3><p>Falta cooldown, falta flag, no hay estado terminal.</p></div><div class='card'><h3>Texto incorrecto</h3><p>Orden de <code>first_valid</code> incorrecto o trigger demasiado amplio.</p></div></div>"
+          "id": "schema",
+          "track": "reference",
+          "title": "D. Flujo global de un escenario",
+          "kicker": "Mapa mental",
+          "keywords": "esquema diagrama flujo escenario narrativa pipeline visión general global",
+          "diagram": "DECLARAR el story_type\n  common/story_cycles/wc_my_path.txt\n    ↓\nEVENTO SETUP OCULTO  (scope = none)\n  create_story → ancla global_var → story_stage = 1\n    ↓\nINTRO VISIBLE\n  presenta el conflicto, introduce actores\n    ↓\nELECCIÓN MAYOR\n  ├─ ruta canónica → recompensas + story_stage++\n  └─ ruta alternativa → flags + riesgos + nuevos eventos\n    ↓\nTEMPORIZADOR EFFECT_GROUP  (fondo)\n  check campeón / progreso / entorno cada N días\n    ↓\nRESOLUCIÓN\n  ├─ final canónico → end_story\n  └─ divergencia no canónica → flag + resolución alternativa"
         }
       ],
       "recipesTitle": "Biblioteca de recetas",
@@ -924,7 +1228,11 @@
         "Cooldown o flag evita bucles",
         "Fallback si un actor muere o falta",
         "error.log revisado después de la prueba"
-      ]
+      ],
+      "trackStoryLabel": "Guía Story Cycle",
+      "trackRefLabel": "Referencia",
+      "tutorialTitle": "Story Cycle — Paso a Paso",
+      "tutorialIntro": "Un recorrido guiado: desde declarar un story_type hasta un story_cycle completo y funcional. Lee cada sección en orden y aplícala directamente en tu mod."
     }
   }
 }

@@ -9,7 +9,9 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params;
 const L = data.i18n[lang] || data.i18n.en;
-const sidebarItems = L.docsSections.map((section) => ({ id: section.id, title: section.title }));
+
+const sections = L.docsSections.filter((s) => s.track === 'reference');
+const sidebarItems = sections.map((s) => ({ id: s.id, title: s.title }));
 ---
 
 <AppLayout lang={lang} active="docs" title={L.metaTitle} sidebarItems={sidebarItems}>
@@ -19,7 +21,7 @@ const sidebarItems = L.docsSections.map((section) => ({ id: section.id, title: s
     <p>{L.heroText}</p>
   </section>
 
-  {L.docsSections.map((section) => (
+  {sections.map((section) => (
     <section class="section" id={section.id}>
       <div class="kicker">{section.kicker}</div>
       <h2>{section.title}</h2>
@@ -29,7 +31,7 @@ const sidebarItems = L.docsSections.map((section) => ({ id: section.id, title: s
         <div class="codewrap">
           <div class="codeHeader">
             <span class="codeTitle">structure</span>
-            <button class="copyButton" type="button" data-copy-code>Copy</button>
+            <button class="copyButton" type="button" data-copy-code><span class="copyLabel">Copy</span></button>
           </div>
           <pre><code>{section.code}</code></pre>
         </div>
@@ -39,8 +41,8 @@ const sidebarItems = L.docsSections.map((section) => ({ id: section.id, title: s
       )}
       {section.multiSnippets && (
         <div class="multiCode">
-          {section.multiSnippets.map(([label, key]) => (
-            <CodeBlock code={data.snippets[key] || ''} title={label} />
+          {section.multiSnippets.map(([snipLabel, snipKey]) => (
+            <CodeBlock code={data.snippets[snipKey] || ''} title={snipLabel} />
           ))}
         </div>
       )}

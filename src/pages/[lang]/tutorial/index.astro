@@ -1,0 +1,100 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import CodeBlock from '../../../components/CodeBlock.astro';
+import data from '../../../data/appData.json';
+
+export function getStaticPaths() {
+  return Object.keys(data.i18n).map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+const L = data.i18n[lang] || data.i18n.en;
+
+const steps = L.docsSections.filter((s) => s.track === 'story-cycle');
+const total = steps.length;
+
+const sidebarItems = steps.map((s, i) => ({
+  id: s.id,
+  title: `${i + 1}. ${s.kicker}`,
+}));
+---
+
+<AppLayout lang={lang} active="tutorial" title={`${L.tutorialTitle} · ${L.brandTitle}`} sidebarItems={sidebarItems}>
+  <section class="hero tutorialHero">
+    <div class="kicker">{L.tabs.tutorial}</div>
+    <h2>{L.tutorialTitle}</h2>
+    <p>{L.tutorialIntro}</p>
+    <div class="tutorialProgress">
+      <div class="progressBar">
+        <div class="progressFill" style={`width: 0%`} data-progress-fill></div>
+      </div>
+      <span class="progressLabel" data-progress-label>0 / {total}</span>
+    </div>
+  </section>
+
+  {steps.map((section, index) => (
+    <section class="section tutorialStep" id={section.id} data-step={index + 1}>
+      <div class="stepMeta">
+        <span class="stepNumber">{index + 1}</span>
+        <div class="kicker">{section.kicker}</div>
+      </div>
+      <h2>{section.title}</h2>
+      {section.html && <div class="prose" set:html={section.html} />}
+      {section.diagram && <div class="diagram">{section.diagram}</div>}
+      {section.code && (
+        <div class="codewrap">
+          <div class="codeHeader">
+            <span class="codeTitle">structure</span>
+            <button class="copyButton" type="button" data-copy-code><span class="copyLabel">Copy</span></button>
+          </div>
+          <pre><code>{section.code}</code></pre>
+        </div>
+      )}
+      {section.snippet && (
+        <CodeBlock code={data.snippets[section.snippet] || ''} title={section.snippet} />
+      )}
+      {section.multiSnippets && (
+        <div class="multiCode">
+          {section.multiSnippets.map(([snipLabel, snipKey]) => (
+            <CodeBlock code={data.snippets[snipKey] || ''} title={snipLabel} />
+          ))}
+        </div>
+      )}
+      {index < total - 1 && (
+        <div class="stepNav">
+          <a class="stepNext" href={`#${steps[index + 1].id}`}>
+            Next: {steps[index + 1].kicker} →
+          </a>
+        </div>
+      )}
+      {index === total - 1 && (
+        <div class="stepNav stepComplete">
+          <span>✓ Story cycle complete — check the Recipes tab for patterns.</span>
+        </div>
+      )}
+    </section>
+  ))}
+</AppLayout>
+
+<script>
+document.addEventListener('astro:page-load', () => {
+  const steps = document.querySelectorAll('[data-step]');
+  const fill = document.querySelector('[data-progress-fill]');
+  const label = document.querySelector('[data-progress-label]');
+  if (!steps.length || !fill) return;
+
+  const total = steps.length;
+  const seen = new Set();
+
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) seen.add(e.target.dataset.step);
+    });
+    const pct = Math.round((seen.size / total) * 100);
+    fill.style.width = `${pct}%`;
+    if (label) label.textContent = `${seen.size} / ${total}`;
+  }, { threshold: 0.2 });
+
+  steps.forEach((s) => obs.observe(s));
+});
+</script>

@@ -392,12 +392,15 @@ select, button, input {
 }
 
 .navGroupTitle {
-  margin: 12px 0 6px;
+  margin: 20px 0 6px;
   color: var(--subtle);
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+.navGroupTitle:first-child {
+  margin-top: 4px;
 }
 .navList {
   display: grid;
@@ -518,6 +521,39 @@ select, button, input {
   font-weight: 800;
 }
 
+/* ── Tracks de documentation ──────────────────────────────── */
+.trackBlock {
+  margin-bottom: 8px;
+}
+.trackHeader {
+  position: sticky;
+  top: var(--top);
+  z-index: 10;
+  margin: 0 0 12px;
+  padding: 10px 0 10px;
+  border-bottom: 1px solid var(--line-2);
+  background: var(--bg);
+}
+:root.light .trackHeader {
+  background: var(--bg);
+}
+[data-track="reference"] .trackHeader {
+  margin-top: 40px;
+}
+.trackLabel {
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+[data-track="story-cycle"] .trackLabel {
+  color: var(--blue);
+}
+[data-track="reference"] .trackLabel {
+  color: var(--violet);
+}
+
 /* ── Grille & cartes ──────────────────────────────────────── */
 .grid {
   display: grid;
@@ -594,6 +630,90 @@ select, button, input {
   line-height: 1.65;
   font-feature-settings: "calt", "liga";
   color: var(--muted);
+}
+
+/* ── Tutorial ─────────────────────────────────────────────── */
+.tutorialHero {
+  margin-bottom: 28px;
+}
+.tutorialProgress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background: var(--line-2);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  border-radius: var(--r-pill);
+  transition: width 400ms var(--ease-out);
+}
+.progressLabel {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--subtle);
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+  min-width: 42px;
+}
+.tutorialStep {
+  padding-left: 60px;
+}
+.stepMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+.stepNumber {
+  position: absolute;
+  left: 18px;
+  top: 22px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  color: #07111c;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.stepNav {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+}
+.stepNext {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--blue);
+  padding: 8px 14px;
+  border: 1px solid rgba(124, 207, 255, 0.3);
+  border-radius: var(--r-md);
+  transition: background 110ms, border-color 110ms;
+}
+.stepNext:hover {
+  background: rgba(124, 207, 255, 0.1);
+  border-color: rgba(124, 207, 255, 0.5);
+  color: var(--blue);
+}
+.stepComplete {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--green);
+  justify-content: center;
 }
 
 /* ── Espace recette ───────────────────────────────────────── */

@@ -10,12 +10,13 @@ const {
   active = 'docs',
   title = 'CK3 Scenario Docs',
   sidebarItems = [],
+  sidebarGroups = [],
   currentId = '',
   recipeId = ''
 } = Astro.props;
 
 const L = data.i18n[lang] || data.i18n.en;
-const hasSidebar = sidebarItems.length > 0 && active !== 'recipes';
+const hasSidebar = (sidebarItems.length > 0 || sidebarGroups.length > 0) && active !== 'recipes';
 
 const firstRecipeId = L.recipes?.[0]?.id || '';
 
@@ -28,6 +29,7 @@ function recipeHome(targetLang = lang) {
 function languageTarget(nextLang) {
   if (active === 'recipes') return langPath(nextLang, 'recipes', recipeId || (data.i18n[nextLang]?.recipes?.[0]?.id || firstRecipeId));
   if (active === 'tools') return langPath(nextLang, 'tools');
+  if (active === 'tutorial') return langPath(nextLang, 'tutorial');
   return langPath(nextLang, 'docs');
 }
 ---
@@ -58,6 +60,7 @@ function languageTarget(nextLang) {
 
       <nav class="topCenter" aria-label="Main navigation">
         <div class="tabs">
+          <a class:list={['tab', { active: active === 'tutorial' }]} href={langPath(lang, 'tutorial')} aria-current={active === 'tutorial' ? 'page' : undefined}>{L.tabs.tutorial}</a>
           <a class:list={['tab', { active: active === 'docs' }]} href={langPath(lang, 'docs')} aria-current={active === 'docs' ? 'page' : undefined}>{L.tabs.docs}</a>
           <a class:list={['tab', { active: active === 'recipes' }]} href={recipeHome(lang)} aria-current={active === 'recipes' ? 'page' : undefined}>{L.tabs.recipes}</a>
           <a class:list={['tab', { active: active === 'tools' }]} href={langPath(lang, 'tools')} aria-current={active === 'tools' ? 'page' : undefined}>{L.tabs.tools}</a>
@@ -77,12 +80,27 @@ function languageTarget(nextLang) {
     <div class="shell">
       {hasSidebar && (
         <aside class="leftNav">
-          <div class="navGroupTitle">Current view</div>
-          <nav class="navList">
-            {sidebarItems.map((item) => (
-              <a class:list={['navItem', { active: item.id === currentId }]} href={`#${item.id}`}>{item.title}</a>
-            ))}
-          </nav>
+          {sidebarGroups.length > 0 ? (
+            sidebarGroups.map((group) => (
+              <Fragment>
+                <div class="navGroupTitle">{group.label}</div>
+                <nav class="navList">
+                  {group.items.map((item) => (
+                    <a class:list={['navItem', { active: item.id === currentId }]} href={`#${item.id}`}>{item.title}</a>
+                  ))}
+                </nav>
+              </Fragment>
+            ))
+          ) : (
+            <Fragment>
+              <div class="navGroupTitle">Current view</div>
+              <nav class="navList">
+                {sidebarItems.map((item) => (
+                  <a class:list={['navItem', { active: item.id === currentId }]} href={`#${item.id}`}>{item.title}</a>
+                ))}
+              </nav>
+            </Fragment>
+          )}
         </aside>
       )}
 
@@ -95,6 +113,7 @@ function languageTarget(nextLang) {
     <ChecklistDrawer items={L.checklist} />
 
     <nav class="mobileNav" aria-label="Main navigation">
+      <a class:list={['mobileTab', { active: active === 'tutorial' }]} href={langPath(lang, 'tutorial')} aria-current={active === 'tutorial' ? 'page' : undefined}>{L.tabs.tutorial}</a>
       <a class:list={['mobileTab', { active: active === 'docs' }]} href={langPath(lang, 'docs')} aria-current={active === 'docs' ? 'page' : undefined}>{L.tabs.docs}</a>
       <a class:list={['mobileTab', { active: active === 'recipes' }]} href={recipeHome(lang)} aria-current={active === 'recipes' ? 'page' : undefined}>{L.tabs.recipes}</a>
       <a class:list={['mobileTab', { active: active === 'tools' }]} href={langPath(lang, 'tools')} aria-current={active === 'tools' ? 'page' : undefined}>{L.tabs.tools}</a>
