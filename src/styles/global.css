@@ -38,6 +38,11 @@
   --blue-tint-2: rgba(124, 207, 255, 0.18);
   --green-tint: rgba(147, 239, 185, 0.09);
 
+  /* ── Fond avec transparence (topbar / nav / drawers) ── */
+  --bg-alpha-74: rgba(7, 17, 28, 0.74);
+  --bg-alpha-88: rgba(7, 17, 28, 0.88);
+  --bg-alpha-96: rgba(7, 17, 28, 0.96);
+
   /* ── Ombres ────────────────────────────────────────────── */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.36);
   --shadow-md: 0 6px 24px rgba(0, 0, 0, 0.44), 0 2px 8px rgba(0, 0, 0, 0.28);
@@ -111,11 +116,7 @@
   --green: #087a48;
   --amber: #8b5e00;
   --violet: #6041a8;
-  --rose: #b04052;
-
   --gold: #8b5e00;
-  --gold-tint: rgba(139, 94, 0, 0.09);
-  --gold-tint-2: rgba(139, 94, 0, 0.18);
 
   --blue-tint: rgba(7, 94, 155, 0.08);
   --blue-tint-2: rgba(7, 94, 155, 0.15);
@@ -242,7 +243,7 @@ a {
   align-items: center;
   padding-inline: 16px;
   border-bottom: 1px solid var(--line);
-  background: rgba(7, 17, 28, 0.88);
+  background: var(--bg-alpha-88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
@@ -376,7 +377,7 @@ select, button, input {
   overflow-y: auto;
   padding: 16px 12px;
   border-right: 1px solid var(--line);
-  background: rgba(7, 17, 28, 0.74);
+  background: var(--bg-alpha-74);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   scrollbar-width: thin;
@@ -1178,7 +1179,7 @@ code {
   transform: translateX(105%);
   transition: transform 280ms var(--ease-out);
   border-left: 1px solid var(--line);
-  background: rgba(7, 17, 28, 0.96);
+  background: var(--bg-alpha-96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: -20px 0 60px rgba(0, 0, 0, 0.50);
