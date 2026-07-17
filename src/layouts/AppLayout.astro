@@ -12,7 +12,8 @@ const {
   sidebarItems = [],
   sidebarGroups = [],
   currentId = '',
-  recipeId = ''
+  recipeId = '',
+  filterPlaceholder = ''
 } = Astro.props;
 
 const L = data.i18n[lang] || data.i18n.en;
@@ -81,16 +82,30 @@ function languageTarget(nextLang) {
       {hasSidebar && (
         <aside class="leftNav">
           {sidebarGroups.length > 0 ? (
-            sidebarGroups.map((group) => (
-              <Fragment>
-                <div class="navGroupTitle">{group.label}</div>
-                <nav class="navList">
-                  {group.items.map((item) => (
-                    <a class:list={['navItem', { active: item.id === currentId }]} href={`#${item.id}`}>{item.title}</a>
-                  ))}
-                </nav>
-              </Fragment>
-            ))
+            <Fragment>
+              {filterPlaceholder && (
+                <div class="navSearch">
+                  <input
+                    type="search"
+                    class="navFilter"
+                    placeholder={filterPlaceholder}
+                    data-sidebar-filter
+                    autocomplete="off"
+                    aria-label={filterPlaceholder}
+                  />
+                </div>
+              )}
+              {sidebarGroups.map((group) => (
+                <Fragment>
+                  <div class="navGroupTitle">{group.label}</div>
+                  <nav class="navList" data-nav-group>
+                    {group.items.map((item) => (
+                      <a class:list={['navItem', { active: item.id === currentId }]} href={`#${item.id}`}>{item.title}</a>
+                    ))}
+                  </nav>
+                </Fragment>
+              ))}
+            </Fragment>
           ) : (
             <Fragment>
               <div class="navGroupTitle">Current view</div>

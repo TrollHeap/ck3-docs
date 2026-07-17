@@ -525,20 +525,23 @@ select, button, input {
 .trackBlock {
   margin-bottom: 8px;
 }
+.trackBlock + .trackBlock {
+  margin-top: 32px;
+}
 .trackHeader {
   position: sticky;
   top: var(--top);
   z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0 0 12px;
-  padding: 10px 0 10px;
+  padding: 10px 0;
   border-bottom: 1px solid var(--line-2);
   background: var(--bg);
 }
 :root.light .trackHeader {
   background: var(--bg);
-}
-[data-track="reference"] .trackHeader {
-  margin-top: 40px;
 }
 .trackLabel {
   font-size: var(--text-xs);
@@ -547,11 +550,46 @@ select, button, input {
   text-transform: uppercase;
   color: var(--subtle);
 }
-[data-track="story-cycle"] .trackLabel {
+.trackCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* Category accent colors */
+[data-category="evenements"] .trackLabel {
   color: var(--blue);
 }
-[data-track="reference"] .trackLabel {
+[data-category="logique"] .trackLabel {
   color: var(--violet);
+}
+[data-category="interface"] .trackLabel {
+  color: var(--green);
+}
+[data-category="implementation"] .trackLabel {
+  color: var(--amber);
+}
+
+[data-category="evenements"] .section::before {
+  background: linear-gradient(180deg, var(--blue), var(--cyan));
+}
+[data-category="logique"] .section::before {
+  background: linear-gradient(180deg, var(--violet), var(--blue));
+}
+[data-category="interface"] .section::before {
+  background: linear-gradient(180deg, var(--green), var(--cyan));
+}
+[data-category="implementation"] .section::before {
+  background: linear-gradient(180deg, var(--amber), var(--green));
 }
 
 /* ── Grille & cartes ──────────────────────────────────────── */
@@ -616,12 +654,78 @@ select, button, input {
 }
 .callout.warn {
   background: rgba(255, 209, 102, 0.08);
-  border-color: rgba(255, 209, 102, 0.30);
+  border-color: rgba(255, 209, 102, 0.3);
 }
 .callout.warn::before {
   content: "⚠";
   color: var(--amber);
 }
+.callout.tip {
+  background: rgba(147, 239, 185, 0.08);
+  border-color: rgba(147, 239, 185, 0.3);
+}
+.callout.tip::before {
+  content: "✦";
+  color: var(--green);
+}
+.callout.danger {
+  background: rgba(255, 107, 107, 0.08);
+  border-color: rgba(255, 107, 107, 0.3);
+}
+.callout.danger::before {
+  content: "✕";
+  color: #ff6b6b;
+}
+
+/* ── Anchor link sur les titres de section ─────────────────── */
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.anchor {
+  opacity: 0;
+  color: var(--muted);
+  font-size: var(--text-base);
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 150ms, color 150ms;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+}
+.anchor:hover {
+  color: var(--blue);
+  background: var(--blue-tint);
+}
+.section:hover .anchor {
+  opacity: 1;
+}
+
+/* ── Filtre sidebar ───────────────────────────────────────── */
+.navSearch {
+  padding: 0 0 12px;
+}
+.navFilter {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 7px 10px;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 150ms, background 150ms;
+}
+.navFilter::placeholder {
+  color: var(--muted);
+}
+.navFilter:focus {
+  border-color: var(--line-accent);
+  background: var(--surface-2);
+}
+
 .diagram {
   white-space: pre-wrap;
   font-family: var(--mono);

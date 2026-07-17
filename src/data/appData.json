@@ -556,7 +556,8 @@
         "evenements": "Events",
         "interface": "Interface UI",
         "logique": "Advanced Logic",
-        "implementation": "Implementation"
+        "implementation": "Implementation",
+        "filterPlaceholder": "Filter sections…"
       }
     },
     "fr": {
@@ -1081,7 +1082,8 @@
         "evenements": "Événements",
         "interface": "Interface UI",
         "logique": "Logique avancée",
-        "implementation": "Implémentation"
+        "implementation": "Implémentation",
+        "filterPlaceholder": "Filtrer les sections…"
       }
     },
     "es": {
@@ -1606,7 +1608,8 @@
         "evenements": "Eventos",
         "interface": "Interfaz UI",
         "logique": "Lógica avanzada",
-        "implementation": "Implementación"
+        "implementation": "Implementación",
+        "filterPlaceholder": "Filtrar secciones…"
       }
     }
   }

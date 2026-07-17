@@ -21,40 +21,68 @@ const catMap = sections.reduce((acc, s) => {
 const sidebarGroups = catOrder
   .filter((k) => catMap[k])
   .map((k) => ({ label: L.refCategories?.[k] || k, items: catMap[k] }));
+
+const groupedSections = catOrder
+  .filter((k) => catMap[k])
+  .map((k) => ({
+    key: k,
+    label: L.refCategories?.[k] || k,
+    sections: sections.filter((s) => s.category === k),
+  }));
 ---
 
-<AppLayout lang={lang} active="docs" title={L.metaTitle} sidebarGroups={sidebarGroups}>
+<AppLayout
+  lang={lang}
+  active="docs"
+  title={L.metaTitle}
+  sidebarGroups={sidebarGroups}
+  filterPlaceholder={L.refCategories?.filterPlaceholder}
+>
   <section class="hero">
     <div class="kicker">{L.heroEyebrow}</div>
     <h2>{L.heroTitle}</h2>
     <p>{L.heroText}</p>
   </section>
 
-  {sections.map((section) => (
-    <section class="section" id={section.id}>
-      <div class="kicker">{section.kicker}</div>
-      <h2>{section.title}</h2>
-      {section.html && <div class="prose" set:html={section.html} />}
-      {section.diagram && <div class="diagram">{section.diagram}</div>}
-      {section.code && (
-        <div class="codewrap">
-          <div class="codeHeader">
-            <span class="codeTitle">structure</span>
-            <button class="copyButton" type="button" data-copy-code><span class="copyLabel">Copy</span></button>
+  {groupedSections.map((group) => (
+    <div class="trackBlock" data-category={group.key}>
+      <div class="trackHeader">
+        <span class="trackLabel">{group.label}</span>
+        <span class="trackCount">{group.sections.length}</span>
+      </div>
+
+      {group.sections.map((section) => (
+        <section class="section" id={section.id}>
+          <div class="sectionHead">
+            <span class="kicker">{section.kicker}</span>
+            <a class="anchor" href={`#${section.id}`} aria-label="Lien permanent">#</a>
           </div>
-          <pre><code>{section.code}</code></pre>
-        </div>
-      )}
-      {section.snippet && (
-        <CodeBlock code={data.snippets[section.snippet] || ''} title={section.snippet} />
-      )}
-      {section.multiSnippets && (
-        <div class="multiCode">
-          {section.multiSnippets.map(([snipLabel, snipKey]) => (
-            <CodeBlock code={data.snippets[snipKey] || ''} title={snipLabel} />
-          ))}
-        </div>
-      )}
-    </section>
+          <h2>{section.title}</h2>
+          {section.html && <div class="prose" set:html={section.html} />}
+          {section.diagram && <div class="diagram">{section.diagram}</div>}
+          {section.code && (
+            <div class="codewrap">
+              <div class="codeHeader">
+                <span class="codeTitle">structure</span>
+                <button class="copyButton" type="button" data-copy-code>
+                  <span class="copyLabel">Copy</span>
+                </button>
+              </div>
+              <pre><code>{section.code}</code></pre>
+            </div>
+          )}
+          {section.snippet && (
+            <CodeBlock code={data.snippets[section.snippet] || ''} title={section.snippet} />
+          )}
+          {section.multiSnippets && (
+            <div class="multiCode">
+              {section.multiSnippets.map(([snipLabel, snipKey]) => (
+                <CodeBlock code={data.snippets[snipKey] || ''} title={snipLabel} />
+              ))}
+            </div>
+          )}
+        </section>
+      ))}
+    </div>
   ))}
 </AppLayout>

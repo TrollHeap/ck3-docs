@@ -84,6 +84,25 @@ document.addEventListener("astro:page-load", () => {
   document.querySelector(".recipeListItem.active")
     ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 
+  const filterInput = document.querySelector("[data-sidebar-filter]");
+  if (filterInput) {
+    filterInput.value = "";
+    filterInput.addEventListener("input", () => {
+      const q = filterInput.value.toLowerCase().trim();
+      document.querySelectorAll(".leftNav [data-nav-group]").forEach((nav) => {
+        const title = nav.previousElementSibling;
+        let anyVisible = false;
+        nav.querySelectorAll(".navItem").forEach((link) => {
+          const match = !q || link.textContent.toLowerCase().includes(q);
+          link.style.display = match ? "" : "none";
+          if (match) anyVisible = true;
+        });
+        if (title) title.style.display = anyVisible ? "" : "none";
+        nav.style.display = anyVisible ? "" : "none";
+      });
+    });
+  }
+
   if (_observer) {
     _observer.disconnect();
     _observer = null;
