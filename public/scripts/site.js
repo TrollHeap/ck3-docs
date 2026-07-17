@@ -27,9 +27,13 @@ document.addEventListener("astro:page-load", () => {
   document.querySelectorAll("[data-copy-code]").forEach((button) => {
     button.addEventListener("click", async () => {
       const code = button.closest(".codewrap")?.querySelector("code")?.innerText || "";
-      await navigator.clipboard.writeText(code);
-      button.classList.add("copied");
-      setTimeout(() => button.classList.remove("copied"), 900);
+      try {
+        await navigator.clipboard.writeText(code);
+        button.classList.add("copied");
+        setTimeout(() => button.classList.remove("copied"), 900);
+      } catch {
+        // clipboard access denied — button stays in default state
+      }
     });
   });
 
@@ -43,6 +47,11 @@ document.addEventListener("astro:page-load", () => {
     backdrop?.classList.toggle("open", state);
     drawer?.setAttribute("aria-hidden", state ? "false" : "true");
     open?.setAttribute("aria-expanded", state ? "true" : "false");
+    if (state) {
+      drawer?.querySelector("button, [href], input, [tabindex]:not([tabindex='-1'])")?.focus();
+    } else {
+      open?.focus();
+    }
   };
 
   open?.addEventListener("click", () => setDrawer(true));
@@ -77,7 +86,22 @@ document.addEventListener("astro:page-load", () => {
     document.removeEventListener("keydown", _keydownHandler);
   }
   _keydownHandler = (e) => {
-    if (e.key === "Escape") setDrawer(false);
+    if (e.key === "Escape") {
+      setDrawer(false);
+      return;
+    }
+    if (e.key === "Tab" && drawer?.classList.contains("open")) {
+      const focusable = [...drawer.querySelectorAll("button, input, [href], [tabindex]:not([tabindex=\"-1\"])")];
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    }
   };
   document.addEventListener("keydown", _keydownHandler);
 

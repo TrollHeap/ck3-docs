@@ -1,0 +1,16 @@
+{
+  "name": "CK3 Scenario Docs",
+  "short_name": "CK3 Docs",
+  "description": "Reusable CK3 narrative scripting patterns for Warcraft-style mods",
+  "start_url": "/ck3-docs/en/docs/",
+  "display": "standalone",
+  "background_color": "#07111c",
+  "theme_color": "#07111c",
+  "icons": [
+    {
+      "src": "/ck3-docs/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

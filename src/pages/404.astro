@@ -1,0 +1,15 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import { langPath } from '../utils/paths.js';
+---
+
+<AppLayout lang="en" active="docs" title="404 — Page not found | CK3 Scenario Docs">
+  <section class="hero">
+    <div class="kicker">404</div>
+    <h2>Page not found</h2>
+    <p>This page doesn't exist or has moved.</p>
+    <p>
+      <a href={langPath('en', 'docs')}>← Back to docs</a>
+    </p>
+  </section>
+</AppLayout>

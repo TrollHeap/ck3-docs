@@ -14,7 +14,7 @@ const recipe = recipes[0];
 const code = data.snippets[recipe.snippet] || '';
 ---
 
-<AppLayout lang={lang} active="recipes" title={`${L.recipesTitle} · ${L.brandTitle}`} recipeId={recipe.id}>
+<AppLayout lang={lang} active="recipes" title={`${L.recipesTitle} · ${L.brandTitle}`} description={L.recipesIntro || ''} recipeId={recipe.id}>
   <section class="hero" transition:name="recipes-hero">
     <div class="kicker">{L.tabs.recipes}</div>
     <h2>{L.recipesTitle}</h2>

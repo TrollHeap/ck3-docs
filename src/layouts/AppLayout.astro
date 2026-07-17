@@ -9,6 +9,7 @@ const {
   lang = 'en',
   active = 'docs',
   title = 'CK3 Scenario Docs',
+  description = '',
   sidebarItems = [],
   sidebarGroups = [],
   currentId = '',
@@ -18,6 +19,8 @@ const {
 
 const L = data.i18n[lang] || data.i18n.en;
 const hasSidebar = (sidebarItems.length > 0 || sidebarGroups.length > 0) && active !== 'recipes';
+const metaDesc = (description || L.heroText || '').slice(0, 160);
+const siteOrigin = Astro.site?.origin || 'https://trollheap.github.io';
 
 const firstRecipeId = L.recipes?.[0]?.id || '';
 
@@ -43,13 +46,28 @@ function languageTarget(nextLang) {
     <meta name="generator" content="Astro" />
     <meta name="theme-color" content="#07111c" />
     <title>{title}</title>
+    <link rel="canonical" href={Astro.url.href} />
+    {langs.map((code) => (
+      <link rel="alternate" hreflang={code} href={`${siteOrigin}${languageTarget(code)}`} />
+    ))}
+    <link rel="alternate" hreflang="x-default" href={`${siteOrigin}${languageTarget('en')}`} />
+    <meta name="description" content={metaDesc} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={metaDesc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={{ en: 'en_US', fr: 'fr_FR', es: 'es_ES' }[lang] || 'en_US'} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={metaDesc} />
     <link rel="icon" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+    <link rel="manifest" href={`${import.meta.env.BASE_URL}site.webmanifest`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet" />
     <ClientRouter />
   </head>
   <body class:list={[active, { hasSidebar }]}>
+    <a href="#main-content" class="skipLink">Aller au contenu</a>
     <header class="topbar">
       <a class="brandMini" href={langPath(lang, 'docs')}>
         <div class="logo">CK3</div>
@@ -119,7 +137,7 @@ function languageTarget(nextLang) {
         </aside>
       )}
 
-      <main class="content">
+      <main class="content" id="main-content">
         <slot />
         <p class="footer">{L.tools.footer}</p>
       </main>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://TrollHeap.github.io/ck3-docs/sitemap-index.xml

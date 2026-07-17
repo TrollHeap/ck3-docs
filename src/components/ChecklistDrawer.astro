@@ -10,7 +10,7 @@ const { items = [] } = Astro.props;
   <span class="checklistBadge" data-checklist-count aria-live="polite"></span>
 </button>
 
-<aside class="checklistDrawer" id="checklistDrawer" aria-hidden="true" aria-label="Debug checklist">
+<aside class="checklistDrawer" id="checklistDrawer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Debug checklist">
   <div class="drawerHeader">
     <h3>Checklist</h3>
     <button class="drawerClose" type="button" data-checklist-close aria-label="Close">×</button>

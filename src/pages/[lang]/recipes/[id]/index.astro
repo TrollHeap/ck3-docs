@@ -21,7 +21,7 @@ const recipe = recipes.find((item) => item.id === id) || recipes[0];
 const code = data.snippets[recipe.snippet] || '';
 ---
 
-<AppLayout lang={lang} active="recipes" title={`${recipe.title} · ${L.brandTitle}`} recipeId={recipe.id}>
+<AppLayout lang={lang} active="recipes" title={`${recipe.title} · ${L.brandTitle}`} description={recipe.steps[0] || ''} recipeId={recipe.id}>
   <section class="hero" transition:name="recipes-hero">
     <div class="kicker">{L.tabs.recipes}</div>
     <h2>{L.recipesTitle}</h2>

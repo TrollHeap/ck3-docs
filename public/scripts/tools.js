@@ -6,7 +6,7 @@ document.addEventListener("astro:page-load", () => {
   if (eventForm && eventOutput) {
     const val = (name) => eventForm.elements[name]?.value?.trim() || "";
 
-    eventForm.addEventListener("submit", (e) => {
+    eventForm.onsubmit = (e) => {
       e.preventDefault();
       const namespace = val("namespace") || "my_story";
       const eventId = val("eventId") || "0001";
@@ -82,7 +82,7 @@ ${namespace}.${eventId} = {
       if (titleEl) {
         titleEl.textContent = eventType === "hidden_setup" ? "hidden setup event" : "character event";
       }
-    });
+    };
   }
 
   // ── Scripted Trigger Generator ───────────────────────────
@@ -92,7 +92,7 @@ ${namespace}.${eventId} = {
   if (triggerForm && triggerOutput) {
     const val = (name) => triggerForm.elements[name]?.value?.trim() || "";
 
-    triggerForm.addEventListener("submit", (e) => {
+    triggerForm.onsubmit = (e) => {
       e.preventDefault();
       const name = val("triggerName") || "my_story_is_active";
       const varFlag = val("varFlag") || "my_story_active";
@@ -104,7 +104,7 @@ ${namespace}.${eventId} = {
       if (extraCond) lines.push(`  ${extraCond}`);
 
       triggerOutput.querySelector("code").textContent = `${name} = {\n${lines.join("\n")}\n}`;
-    });
+    };
   }
 
   // ── Scripted Effect Generator ────────────────────────────
@@ -114,7 +114,7 @@ ${namespace}.${eventId} = {
   if (effectForm && effectOutput) {
     const val = (name) => effectForm.elements[name]?.value?.trim() || "";
 
-    effectForm.addEventListener("submit", (e) => {
+    effectForm.onsubmit = (e) => {
       e.preventDefault();
       const name = val("effectName") || "my_story_start";
       const varFlag = val("varFlag") || "my_story_active";
@@ -132,6 +132,6 @@ ${namespace}.${eventId} = {
     ${effectContent}
   }
 }`;
-    });
+    };
   }
 });

@@ -11,7 +11,7 @@ const L = data.i18n[lang] || data.i18n.en;
 const T = L.tools;
 ---
 
-<AppLayout lang={lang} active="tools" title={`${T.title} · ${L.brandTitle}`}>
+<AppLayout lang={lang} active="tools" title={`${T.title} · ${L.brandTitle}`} description={T.intro || ''}>
   <section class="hero">
     <div class="kicker">{L.tabs.tools}</div>
     <h2>{T.title}</h2>

@@ -19,7 +19,7 @@ const sidebarItems = steps.map((s, i) => ({
 }));
 ---
 
-<AppLayout lang={lang} active="tutorial" title={`${L.tutorialTitle} · ${L.brandTitle}`} sidebarItems={sidebarItems}>
+<AppLayout lang={lang} active="tutorial" title={`${L.tutorialTitle} · ${L.brandTitle}`} description={L.tutorialIntro || ''} sidebarItems={sidebarItems}>
   <section class="hero tutorialHero">
     <div class="kicker">{L.tabs.tutorial}</div>
     <h2>{L.tutorialTitle}</h2>

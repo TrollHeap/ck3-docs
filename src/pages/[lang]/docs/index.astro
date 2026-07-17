@@ -13,22 +13,19 @@ const L = data.i18n[lang] || data.i18n.en;
 const sections = L.docsSections.filter((s) => s.track === 'reference');
 
 const catOrder = ['evenements', 'logique', 'interface', 'implementation'];
-const catMap = sections.reduce((acc, s) => {
-  const key = s.category || 'other';
-  (acc[key] = acc[key] || []).push({ id: s.id, title: s.title });
-  return acc;
-}, {});
-const sidebarGroups = catOrder
-  .filter((k) => catMap[k])
-  .map((k) => ({ label: L.refCategories?.[k] || k, items: catMap[k] }));
 
 const groupedSections = catOrder
-  .filter((k) => catMap[k])
   .map((k) => ({
     key: k,
     label: L.refCategories?.[k] || k,
     sections: sections.filter((s) => s.category === k),
-  }));
+  }))
+  .filter((g) => g.sections.length > 0);
+
+const sidebarGroups = groupedSections.map((g) => ({
+  label: g.label,
+  items: g.sections.map((s) => ({ id: s.id, title: s.title })),
+}));
 ---
 
 <AppLayout
