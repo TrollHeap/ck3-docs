@@ -1184,6 +1184,30 @@ code {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0 18px;
+  font-size: var(--text-sm);
+}
+.prose th,
+.prose td {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.prose th {
+  background: rgba(124, 207, 255, 0.06);
+  font-weight: 600;
+  color: var(--text);
+}
+.prose td {
+  color: var(--text-2);
+}
+.prose tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
+}
 
 /* Code inline (hors pre) */
 .prose code, .card code, .step code {

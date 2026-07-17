@@ -22,7 +22,16 @@
     "effect-group-timer": "story_my_path = {\n  # on_setup / on_end / on_owner_death ...\n\n  # Check champion status every 2 years while the story is active\n  effect_group = {\n    years = 2\n\n    triggered_effect = {\n      trigger = {\n        story_owner = {\n          has_variable = champion\n          var:champion = { is_alive = yes }\n        }\n      }\n      effect = {\n        story_owner = {\n          trigger_event = { id = wc_my_path.0100  days = 1 }\n        }\n      }\n    }\n  }\n}",
     "viz-block": "# Makes the story visible in the character's story panel\nstory_my_path = {\n  visible = yes\n\n  icon = {\n    trigger = { always = yes }\n    reference = \"gfx/interface/icons/my_story_icon.dds\"\n  }\n\n  visualization = {\n    # Localized description shown in the story UI tooltip\n    custom_string_key = \"MY_PATH_STORY_UI_STRING\"\n\n    # Track a key character\n    character = {\n      variable_name = \"champion\"\n      label = \"MY_PATH_CHAMPION\"\n    }\n\n    # Progress counter displayed as a bar\n    basic_counter = {\n      variable_name = \"story_stage\"\n      min = 0\n      max = 5\n      label = \"MY_PATH_STAGE\"\n    }\n\n    # Active modifier shown in the panel\n    modifiers = {\n      my_path_active_modifier\n    }\n  }\n\n  on_setup = { ... }\n  on_end = { ... }\n  on_owner_death = { end_story = yes }\n}",
     "effect-group-advanced": "story_my_path = {\n  # Random interval between 30 and 60 days, fires 50 % of the time\n  effect_group = {\n    days = { 30 60 }\n    chance = 50\n\n    trigger = {\n      story_owner = { has_variable = champion }\n    }\n\n    # first_valid: only the first matching triggered_effect fires\n    first_valid = {\n      triggered_effect = {\n        trigger = {\n          story_owner = { var:champion = { is_dead = yes } }\n        }\n        effect = { end_story = yes }\n      }\n      triggered_effect = {\n        trigger = { always = yes }\n        effect = {\n          story_owner = {\n            # Draws a random event from the on_action pool\n            trigger_event = { on_action = my_path_monthly_events }\n          }\n        }\n      }\n    }\n  }\n}",
-    "global-list-guard": "# Guard pattern: use a global variable list to prevent re-firing\n# More robust than has_global_variable for campaign-wide flags\n\nimmediate = {\n  add_to_global_variable_list = {\n    name = wc_events_happened\n    target = flag:my_story_started\n  }\n}\n\n# Check anywhere:\ntrigger = {\n  NOT = {\n    is_in_global_list = {\n      variable = wc_events_happened\n      target = flag:my_story_started\n    }\n  }\n}"
+    "global-list-guard": "# Guard pattern: use a global variable list to prevent re-firing\n# More robust than has_global_variable for campaign-wide flags\n\nimmediate = {\n  add_to_global_variable_list = {\n    name = wc_events_happened\n    target = flag:my_story_started\n  }\n}\n\n# Check anywhere:\ntrigger = {\n  NOT = {\n    is_in_global_list = {\n      variable = wc_events_happened\n      target = flag:my_story_started\n    }\n  }\n}",
+    "character-event-full": "my_mod.0001 = {\n    type = character_event\n    title = my_mod.0001.t\n    desc = my_mod.0001.desc\n    theme = mental_health\n\n    left_portrait = {\n        character = root\n        animation = worry\n    }\n    right_portrait = {\n        character = scope:target\n        animation = personality_bold\n    }\n\n    trigger = {\n        is_available = yes\n        is_adult = yes\n        NOT = { has_character_flag = my_event_done }\n    }\n\n    immediate = {\n        save_scope_as = root_scope\n        random_courtier_or_guest = {\n            limit = {\n                is_adult = yes\n                is_ai = yes\n                opinion = { who = root value >= 20 }\n            }\n            save_scope_as = target\n        }\n    }\n\n    option = {\n        name = my_mod.0001.a\n        add_character_flag = my_event_done\n        add_stress = minor_stress_impact_gain\n        ai_chance = { base = 100 }\n    }\n    option = {\n        name = my_mod.0001.b\n        add_gold = 50\n        ai_chance = { base = 30 }\n    }\n}",
+    "scripted-trigger-def": "# common/scripted_triggers/my_mod_triggers.txt\n\nis_valid_story_candidate = {\n    is_adult = yes\n    is_alive = yes\n    is_landed = yes\n    NOR = {\n        has_character_flag = story_active\n        is_at_war = yes\n    }\n}\n\n# With $TARGET$ argument\nis_related_and_close = {\n    is_close_family_of = $TARGET$\n    opinion = { who = $TARGET$ value >= 10 }\n}\n\n# Usage\ntrigger = {\n    is_valid_story_candidate = yes\n    is_related_and_close = { TARGET = liege }\n}",
+    "scope-chain-example": "immediate = {\n    save_scope_as = instigator\n\n    liege = {\n        save_scope_as = the_liege\n    }\n\n    every_vassal = {\n        limit = {\n            culture = scope:instigator.culture\n            is_adult = yes\n        }\n        add_opinion = {\n            modifier = opinion_grateful\n            target = scope:instigator\n        }\n    }\n}\n\n# In a follow-up option — scope: stays available\noption = {\n    name = my_event.0002.a\n    scope:the_liege = {\n        add_gold = 100\n    }\n}",
+    "variables-example": "# Declare a variable on the current character\nset_variable = {\n    name = story_stage\n    value = 1\n}\n\n# Check in a trigger\ntrigger = {\n    has_variable = story_stage\n    var:story_stage >= 2\n}\n\n# Increment\nchange_variable = {\n    name = story_stage\n    add = 1\n}\n\n# Global variable (accessible from any scope)\nset_global_variable = {\n    name = world_event_active\n    value = yes\n}\n\ntrigger = {\n    global_var:world_event_active = yes\n}\n\n# Clean up\nremove_variable = story_stage",
+    "localization-yml": "# localization/english/my_mod_l_english.yml\n# Encoding: UTF-8 with BOM (required)\n\nl_english:\n my_mod.0001.t: \"A Troubling Discovery\"\n my_mod.0001.desc: \"[ROOT.Char.GetFirstNameNicknamed] has uncovered a plot.\\n\\n#N This cannot be ignored.#!\"\n my_mod.0001.a: \"Confront [scope:target.GetFirstNameNicknamed] directly\"\n my_mod.0001.b: \"Wait and observe\"\n\n# Key placeholders:\n#   [ROOT.Char.GetFirstNameNicknamed]  - first name + nickname\n#   [ROOT.Char.GetFullName]            - full name\n#   [CHARACTER.GetHerHim]              - she/he\n#   [CHARACTER.GetHerHis]              - her/his\n#   [CHARACTER.GetLadyLord]            - Lady/Lord\n\n# Formatting codes:\n#   #P text#!    - green (positive)\n#   #N text#!    - red (negative)\n#   #E text#!    - light blue (concept)\n#   #bold text#! - bold\n#   \\n           - line break",
+    "decision-entry": "# common/decisions/my_mod_decisions.txt\n\nmy_story_decision = {\n    title = my_story_decision.title\n    desc  = my_story_decision.desc\n\n    # Image shown in the decision panel (optional but recommended)\n    picture = gfx/interface/illustrations/decisions/my_illustration.dds\n\n    is_shown = {\n        # Minimal visibility check — keep cheap\n        is_adult = yes\n        NOT = { has_character_flag = my_cycle_started }\n    }\n\n    is_valid = {\n        # Strict readiness check — shown as requirements to the player\n        is_adult = yes\n        is_landed = yes\n        gold >= 100\n        NOT = { has_character_flag = my_cycle_started }\n    }\n\n    is_valid_showing_failures_only = {\n        gold >= 100\n    }\n\n    cost = {\n        gold = 100\n    }\n\n    effect = {\n        add_character_flag = my_cycle_started\n        start_story = {\n            story = my_story_cycle\n        }\n        send_interface_message = {\n            type = my_cycle_launched_msg\n            title = my_cycle_launched_msg.title\n        }\n    }\n\n    ai_will_do = {\n        base = 10\n        modifier = {\n            factor = 0\n            NOT = { gold >= 200 }\n        }\n    }\n}",
+    "on-action-hooks": "# common/on_action/my_mod_on_actions.txt\n\n# React to winning a combat (e.g. advance a story stage)\non_combat_end = {\n    effect = {\n        attacker = {\n            if = {\n                limit = {\n                    has_story = my_story_cycle\n                    has_character_flag = awaiting_combat\n                }\n                remove_character_flag = awaiting_combat\n                story = {\n                    type = my_story_cycle\n                    triggered_effect = on_combat_won\n                }\n            }\n        }\n    }\n}\n\n# React to ending a war\non_war_ended_victor = {\n    effect = {\n        root = {\n            if = {\n                limit = { has_story = my_story_cycle }\n                trigger_event = { id = my_mod.war_victory }\n            }\n        }\n    }\n}\n\n# Monthly pulse — used for timers or periodic checks\non_monthly_pulse = {\n    events = { my_mod.monthly_check }\n}\n\n# Yearly pulse — cheaper; use for slow-moving story stages\non_yearly_pulse = {\n    events = { my_mod.yearly_check }\n}",
+    "mod-file-layout": "# Minimal layout for a narrative story cycle mod\n\nmy_mod/\n├── common/\n│   ├── decisions/\n│   │   └── my_mod_decisions.txt          ← player entry points\n│   ├── messages/\n│   │   └── my_mod_messages.txt           ← interface notifications\n│   ├── on_action/\n│   │   └── my_mod_on_actions.txt         ← system event hooks\n│   ├── scripted_effects/\n│   │   └── my_mod_effects.txt            ← reusable effect blocks\n│   ├── scripted_triggers/\n│   │   └── my_mod_triggers.txt           ← reusable trigger blocks\n│   └── story_cycles/\n│       └── my_story_cycle.txt            ← the cycle definition\n│\n├── events/\n│   ├── story_cycles/\n│   │   └── my_story_cycle_events.txt     ← main narrative events\n│   └── decisions_events/\n│       └── my_mod_decision_events.txt    ← events triggered by decisions\n│\n├── gfx/\n│   └── interface/\n│       └── illustrations/\n│           └── decisions/\n│               └── my_illustration.dds   ← 520x300 DXT5/BC3\n│\n└── localization/\n    └── english/\n        ├── event_localization/\n        │   └── my_story_events_l_english.yml\n        └── my_mod_decisions_l_english.yml",
+    "message-definition": "# common/messages/my_mod_messages.txt\n\nmy_cycle_launched_msg = {\n    type = GOOD_MSG               # GOOD_MSG / NEUTRAL_MSG / BAD_MSG\n    name = my_cycle_launched_msg\n    text = my_cycle_launched_msg.text\n    tooltip = my_cycle_launched_msg.tooltip\n}\n\nmy_cycle_failed_msg = {\n    type = BAD_MSG\n    name = my_cycle_failed_msg\n    text = my_cycle_failed_msg.text\n    tooltip = my_cycle_failed_msg.tooltip\n}\n\n# Usage inside an event option or effect:\n# send_interface_message = {\n#     type = my_cycle_launched_msg\n#     title = my_cycle_launched_msg.title\n# }"
   },
   "i18n": {
     "en": {
@@ -255,6 +264,108 @@
           "kicker": "Mental map",
           "keywords": "schema diagram flow scenario narrative pipeline overview global",
           "diagram": "DECLARE story_type\n  common/story_cycles/wc_my_path.txt\n    ↓\nHIDDEN SETUP EVENT  (scope = none)\n  create_story → global_var anchor → story_stage = 1\n    ↓\nINTRO VISIBLE EVENT\n  present the conflict, introduce actors\n    ↓\nMAJOR CHOICE\n  ├─ canon path → rewards + story_stage++\n  └─ alternate path → flags + risks + new events\n    ↓\nEFFECT_GROUP TIMER  (background)\n  check champion / progress / environment every N days\n    ↓\nRESOLUTION\n  ├─ canon ending → end_story\n  └─ non-canon divergence → flag + alternate resolution"
+        },
+        {
+          "id": "event-anatomy",
+          "title": "Event Anatomy",
+          "kicker": "Core Pattern",
+          "track": "reference",
+          "html": "<p>Every CK3 narrative event is a <code>character_event</code> block. This structure covers real-world events — most use only a subset.</p>\n<ul>\n  <li><strong>trigger</strong> — evaluated before the event fires; all conditions must be true</li>\n  <li><strong>immediate</strong> — runs invisibly the moment the event fires; use <code>save_scope_as</code> here</li>\n  <li><strong>option</strong> — one block per player/AI choice; requires a localization <code>name</code> key</li>\n  <li><strong>ai_chance</strong> — weight for AI decision; <code>base = 100</code> is the neutral value</li>\n  <li><strong>stress_impact</strong> — use named constants: <code>minor_stress_impact_gain</code>, <code>stress_impact_loss</code>, etc.</li>\n</ul>",
+          "snippet": "character-event-full"
+        },
+        {
+          "id": "triggers-cheatsheet",
+          "title": "Triggers Cheat Sheet",
+          "kicker": "Triggers",
+          "track": "reference",
+          "html": "<p>Triggers are boolean checks. Multiple triggers in a block are implicitly AND.</p>\n<h3>Logical operators</h3>\n<ul>\n  <li><code>AND = { … }</code> — explicit AND (rarely needed)</li>\n  <li><code>OR = { … }</code> — at least one must be true</li>\n  <li><code>NOT = { … }</code> — negates a single trigger</li>\n  <li><code>NOR = { … }</code> — none must be true</li>\n</ul>\n<h3>Top triggers</h3>\n<table>\n  <tr><th>Trigger</th><th>Example</th></tr>\n  <tr><td>is_adult</td><td><code>is_adult = yes</code></td></tr>\n  <tr><td>is_alive</td><td><code>is_alive = yes</code></td></tr>\n  <tr><td>is_landed</td><td><code>is_landed = yes</code></td></tr>\n  <tr><td>is_at_war</td><td><code>is_at_war = no</code></td></tr>\n  <tr><td>is_ai</td><td><code>is_ai = yes</code></td></tr>\n  <tr><td>is_independent_ruler</td><td><code>is_independent_ruler = yes</code></td></tr>\n  <tr><td>has_trait</td><td><code>has_trait = brave</code></td></tr>\n  <tr><td>has_character_flag</td><td><code>has_character_flag = quest_done</code></td></tr>\n  <tr><td>has_variable</td><td><code>has_variable = story_stage</code></td></tr>\n  <tr><td>exists</td><td><code>exists = primary_spouse</code></td></tr>\n  <tr><td>opinion</td><td><code>opinion = { who = liege value >= 20 }</code></td></tr>\n  <tr><td>age</td><td><code>age >= 18</code></td></tr>\n</table>\n<p><strong>any_X</strong> as trigger: returns true if at least one element matches — <code>any_child = { is_adult = yes }</code></p>",
+          "snippet": "scripted-trigger-def"
+        },
+        {
+          "id": "scopes-chaining",
+          "title": "Scope Chaining",
+          "kicker": "Scopes",
+          "track": "reference",
+          "html": "<p>A scope is the currently targeted entity. Every effect and trigger runs in a scope context.</p>\n<ul>\n  <li><code>root</code> — the event owner (the character the event fired on)</li>\n  <li><code>this</code> — the current scope (useful inside nested blocks)</li>\n  <li><code>prev</code> — the scope one level up</li>\n  <li><code>scope:name</code> — a previously saved named scope</li>\n  <li><code>liege</code>, <code>primary_spouse</code>, <code>father</code> — relation accessors</li>\n</ul>\n<h3>Iterators</h3>\n<ul>\n  <li><code>every_X { limit = { … } … }</code> — apply effect to all matching</li>\n  <li><code>random_X { limit = { … } … }</code> — pick one at random</li>\n  <li><code>ordered_X { order_by = age position = 0 … }</code> — pick Nth</li>\n  <li><code>any_X { … }</code> — trigger: does at least one element match?</li>\n</ul>",
+          "snippet": "scope-chain-example"
+        },
+        {
+          "id": "effects-cheatsheet",
+          "title": "Effects Cheat Sheet",
+          "kicker": "Effects",
+          "track": "reference",
+          "html": "<p>Effects fire in sequence inside <code>immediate</code> or inside an <code>option</code>.</p>\n<table>\n  <tr><th>Effect</th><th>Example</th></tr>\n  <tr><td>trigger_event</td><td><code>trigger_event = { id = my_mod.0002 days = 3 }</code></td></tr>\n  <tr><td>save_scope_as</td><td><code>save_scope_as = hero</code></td></tr>\n  <tr><td>add_trait</td><td><code>add_trait = brave</code></td></tr>\n  <tr><td>remove_trait</td><td><code>remove_trait = craven</code></td></tr>\n  <tr><td>add_opinion</td><td><code>add_opinion = { modifier = opinion_grateful target = root }</code></td></tr>\n  <tr><td>add_character_flag</td><td><code>add_character_flag = quest_started</code></td></tr>\n  <tr><td>set_variable</td><td><code>set_variable = { name = stage value = 1 }</code></td></tr>\n  <tr><td>change_variable</td><td><code>change_variable = { name = stage add = 1 }</code></td></tr>\n  <tr><td>add_stress</td><td><code>add_stress = minor_stress_impact_gain</code></td></tr>\n  <tr><td>add_gold</td><td><code>add_gold = 50</code></td></tr>\n</table>\n<h3>stress_impact constants</h3>\n<p><code>minor_stress_impact_gain</code> · <code>stress_impact_gain</code> · <code>major_stress_impact_gain</code><br><code>minor_stress_impact_loss</code> · <code>stress_impact_loss</code> · <code>major_stress_impact_loss</code></p>"
+        },
+        {
+          "id": "variables-guide",
+          "title": "Variables",
+          "kicker": "Variables",
+          "track": "reference",
+          "html": "<p>Variables store custom state on any scope and persist until removed. Use them to track story progress, counters, and flags.</p>\n<ul>\n  <li><code>var:name</code> — on the current scope, persistent</li>\n  <li><code>global_var:name</code> — on the entire game, accessible from any scope</li>\n  <li><code>local_var:name</code> — temporary, limited to the top scope</li>\n</ul>\n<p>Always check existence before reading: <code>has_variable = story_stage</code>, then compare: <code>var:story_stage &gt;= 2</code></p>",
+          "snippet": "variables-example"
+        },
+        {
+          "id": "localization-guide",
+          "title": "Localization Format",
+          "kicker": "Localization",
+          "track": "reference",
+          "html": "<p>All player-facing text lives in <code>.yml</code> files. One wrong encoding byte silently breaks all keys in the file.</p>\n<ul>\n  <li>Encoding: <strong>UTF-8 with BOM</strong> (not plain UTF-8)</li>\n  <li>First line must be exactly: <code>l_english:</code> — lowercase L, no trailing space</li>\n  <li>Key format: one leading space, then <code>key: \"value\"</code></li>\n  <li>Folders: <code>localization/english/</code>, <code>localization/french/</code>, etc.</li>\n  <li>Filename must contain <code>l_english</code> (or the target language code)</li>\n</ul>\n<h3>Formatting codes</h3>\n<table>\n  <tr><th>Code</th><th>Result</th></tr>\n  <tr><td><code>#P text#!</code></td><td>Green (positive)</td></tr>\n  <tr><td><code>#N text#!</code></td><td>Red (negative)</td></tr>\n  <tr><td><code>#E text#!</code></td><td>Light blue (concept)</td></tr>\n  <tr><td><code>#bold text#!</code></td><td>Bold</td></tr>\n  <tr><td><code>\\n</code></td><td>Line break</td></tr>\n</table>",
+          "snippet": "localization-yml"
+        },
+        {
+          "id": "scripted-reuse",
+          "title": "Scripted Triggers & Effects",
+          "kicker": "Scripted Reuse",
+          "track": "reference",
+          "html": "<p>Scripted triggers and effects are macro-expanded at load time — zero runtime cost. They live in <code>common/scripted_triggers/</code> and <code>common/scripted_effects/</code>.</p>\n<ul>\n  <li>Arguments: declare with <code>$PARAM$</code>, pass as <code>PARAM = value</code> at the call site</li>\n  <li>Scripted trigger: call with <code>my_trigger = yes</code></li>\n  <li>Scripted effect: call with <code>my_effect = yes</code> or pass arguments</li>\n  <li>No performance cost — they are inlined at script load time</li>\n</ul>"
+        },
+        {
+          "id": "decisions-entry",
+          "title": "Decisions as Story Entry Points",
+          "kicker": "Player Entry",
+          "track": "story-cycle",
+          "html": "<p>A story cycle usually starts from one of two places: an <code>on_action</code> (automatic, like <code>on_game_start</code>) or a <strong>decision</strong> (player-triggered). Decisions are the cleaner approach for optional story paths — the player opts in.</p>\n<ul>\n  <li><strong>is_shown</strong> — cheap check for who sees the decision in the list; keep it minimal</li>\n  <li><strong>is_valid</strong> — strict check shown to the player as requirements; can be expensive</li>\n  <li><strong>is_valid_showing_failures_only</strong> — subset of is_valid that shows up as \"requirements\" even when failed</li>\n  <li><strong>cost</strong> — gold, prestige, piety the player pays on confirm</li>\n  <li><strong>effect</strong> — fires on confirm; call <code>start_story = { story = my_cycle }</code> here</li>\n  <li><strong>picture</strong> — path to a .dds illustration (520×300, DXT5/BC3 compression)</li>\n  <li><strong>ai_will_do</strong> — base weight + modifier list for AI willingness; <code>factor = 0</code> blocks completely</li>\n</ul>\n<p>File location: <code>common/decisions/my_mod_decisions.txt</code></p>",
+          "snippet": "decision-entry"
+        },
+        {
+          "id": "on-actions-hooks",
+          "title": "Reacting to Game Events with on_actions",
+          "kicker": "System Hooks",
+          "track": "story-cycle",
+          "html": "<p>on_actions let your story react to things the game engine fires — combat results, war outcomes, deaths, monthly ticks. This is how a story cycle advances without waiting for a timer event.</p>\n<h3>Most useful narrative hooks</h3>\n<table>\n  <tr><th>on_action</th><th>When it fires</th></tr>\n  <tr><td>on_combat_end</td><td>After any combat resolves; root = attacker</td></tr>\n  <tr><td>on_war_ended_victor</td><td>War victory; root = winning side leader</td></tr>\n  <tr><td>on_war_ended_white_peace</td><td>White peace</td></tr>\n  <tr><td>on_war_ended_defeat</td><td>War defeat</td></tr>\n  <tr><td>on_death</td><td>Any character death; root = deceased</td></tr>\n  <tr><td>on_birth</td><td>Character birth; root = child</td></tr>\n  <tr><td>on_title_gain</td><td>Title claimed; root = new holder</td></tr>\n  <tr><td>on_artifact_gained</td><td>Artifact enters inventory; root = owner</td></tr>\n  <tr><td>on_monthly_pulse</td><td>Every game month — cheap periodic check</td></tr>\n  <tr><td>on_yearly_pulse</td><td>Every game year — for slow story stages</td></tr>\n</table>\n<p>File location: <code>common/on_action/my_mod_on_actions.txt</code>. Always guard with <code>has_story</code> + a character flag to avoid running for all characters.</p>",
+          "snippet": "on-action-hooks"
+        },
+        {
+          "id": "mod-file-structure",
+          "title": "Mod File Structure",
+          "kicker": "File Layout",
+          "track": "story-cycle",
+          "html": "<p>A real story cycle mod spans multiple folders. The diff of a single CK3 narrative feature typically touches 10–20 files across 6+ directories. This is the canonical layout.</p>\n<ul>\n  <li><code>common/decisions/</code> — player-triggered entry points</li>\n  <li><code>common/story_cycles/</code> — the cycle definition (<code>on_setup</code>, <code>on_end</code>, <code>triggered_effect</code>)</li>\n  <li><code>common/on_action/</code> — hooks into engine events (combat, war, death)</li>\n  <li><code>common/messages/</code> — interface notifications (<code>GOOD_MSG</code>/<code>BAD_MSG</code>)</li>\n  <li><code>common/scripted_effects/</code> — reusable effect macros</li>\n  <li><code>common/scripted_triggers/</code> — reusable trigger macros</li>\n  <li><code>events/story_cycles/</code> — the narrative events themselves</li>\n  <li><code>events/decisions_events/</code> — events triggered directly by decisions</li>\n  <li><code>gfx/interface/illustrations/decisions/</code> — .dds images for decision panels</li>\n  <li><code>localization/english/event_localization/</code> — per-file .yml localization</li>\n</ul>",
+          "snippet": "mod-file-layout"
+        },
+        {
+          "id": "decisions-reference",
+          "title": "Decisions",
+          "kicker": "Decisions",
+          "track": "reference",
+          "html": "<p>Decisions are player-triggered actions shown in the character decision panel. They are the canonical way to let the player start a story cycle voluntarily.</p>\n<h3>Fields</h3>\n<table>\n  <tr><th>Field</th><th>Required</th><th>Purpose</th></tr>\n  <tr><td>title / desc</td><td>Yes</td><td>Localization keys for name and description</td></tr>\n  <tr><td>picture</td><td>No</td><td>Path to .dds illustration (520×300)</td></tr>\n  <tr><td>is_shown</td><td>Yes</td><td>Cheap check — who sees the decision</td></tr>\n  <tr><td>is_valid</td><td>Yes</td><td>Strict check — shown as requirements to the player</td></tr>\n  <tr><td>is_valid_showing_failures_only</td><td>No</td><td>Subset of is_valid that displays even when failing</td></tr>\n  <tr><td>cost</td><td>No</td><td>gold / prestige / piety paid on confirm</td></tr>\n  <tr><td>effect</td><td>Yes</td><td>Runs on confirm</td></tr>\n  <tr><td>ai_will_do</td><td>No</td><td>Weight for AI; <code>base</code> + <code>modifier</code> list</td></tr>\n</table>\n<h3>Key points</h3>\n<ul>\n  <li>Decisions live in <code>common/decisions/*.txt</code></li>\n  <li>Use <code>start_story = { story = my_cycle }</code> in <code>effect</code> to launch a story cycle</li>\n  <li>Add <code>send_interface_message = { type = msg_key … }</code> to notify the player on launch</li>\n  <li>Guard both <code>is_shown</code> and <code>is_valid</code> with a character flag so the decision disappears after use</li>\n</ul>",
+          "snippet": "decision-entry"
+        },
+        {
+          "id": "on-actions-reference",
+          "title": "on_actions — System Hooks",
+          "kicker": "on_actions",
+          "track": "reference",
+          "html": "<p>on_actions are CK3's pub/sub system. You hook into engine events to advance a story without player input.</p>\n<h3>Anatomy</h3>\n<ul>\n  <li>File: <code>common/on_action/my_mod_on_actions.txt</code></li>\n  <li>Each block either lists <code>events = { id.001 id.002 }</code> or contains an inline <code>effect = { … }</code></li>\n  <li>Multiple mods can hook the same on_action — they all fire</li>\n  <li>Always guard with <code>has_story</code> + a character flag to avoid running for every character in the game</li>\n</ul>\n<h3>Narrative-relevant on_actions</h3>\n<table>\n  <tr><th>on_action</th><th>Root scope</th><th>Notes</th></tr>\n  <tr><td>on_game_start</td><td>no scope</td><td>Auto-start story cycles at new game</td></tr>\n  <tr><td>on_combat_end</td><td>attacker character</td><td>Check attacker / defender scopes</td></tr>\n  <tr><td>on_war_ended_victor</td><td>war leader</td><td>Also: _white_peace, _defeat</td></tr>\n  <tr><td>on_death</td><td>deceased character</td><td>killer scope available</td></tr>\n  <tr><td>on_birth</td><td>newborn</td><td>mother / father scopes available</td></tr>\n  <tr><td>on_title_gain</td><td>new holder</td><td>title scope available</td></tr>\n  <tr><td>on_artifact_gained</td><td>new owner</td><td>artifact scope available</td></tr>\n  <tr><td>on_monthly_pulse</td><td>character</td><td>Runs for many characters — keep checks cheap</td></tr>\n  <tr><td>on_yearly_pulse</td><td>character</td><td>Same as monthly but annual</td></tr>\n</table>",
+          "snippet": "on-action-hooks"
+        },
+        {
+          "id": "messages-reference",
+          "title": "Interface Messages",
+          "kicker": "Notifications",
+          "track": "reference",
+          "html": "<p>Messages are the small pop-up notifications (colored banner at the top of the screen) that inform the player something happened. Define them in <code>common/messages/</code> and call <code>send_interface_message</code> from an event effect.</p>\n<h3>Message types</h3>\n<table>\n  <tr><th>type</th><th>Color</th><th>Use when</th></tr>\n  <tr><td>GOOD_MSG</td><td>Green</td><td>Positive outcome for the player</td></tr>\n  <tr><td>NEUTRAL_MSG</td><td>White/gray</td><td>Informational, no clear valence</td></tr>\n  <tr><td>BAD_MSG</td><td>Red</td><td>Negative outcome</td></tr>\n</table>\n<h3>Usage in an effect</h3>\n<p><code>send_interface_message = { type = my_msg title = my_msg.title left_icon = root }</code></p>\n<p>File: <code>common/messages/my_mod_messages.txt</code>. Localization keys needed: <code>name</code>, <code>text</code>, <code>tooltip</code> — all in the standard .yml format.</p>",
+          "snippet": "message-definition"
         }
       ],
       "recipesTitle": "Recipe library",
@@ -658,6 +769,108 @@
           "kicker": "Carte mentale",
           "keywords": "schema diagram flux scénario narrative pipeline vue d'ensemble global",
           "diagram": "DÉCLARER le story_type\n  common/story_cycles/wc_my_path.txt\n    ↓\nEVENT SETUP HIDDEN  (scope = none)\n  create_story → ancre global_var → story_stage = 1\n    ↓\nINTRO VISIBLE\n  présente le conflit, introduit les acteurs\n    ↓\nCHOIX MAJEUR\n  ├─ voie canonique → récompenses + story_stage++\n  └─ voie alternative → flags + risques + nouveaux events\n    ↓\nTIMER EFFECT_GROUP  (arrière-plan)\n  check champion / progression / environnement tous les N jours\n    ↓\nRÉSOLUTION\n  ├─ fin canonique → end_story\n  └─ divergence non-canon → flag + résolution alternative"
+        },
+        {
+          "id": "event-anatomy",
+          "title": "Anatomie d'un événement",
+          "kicker": "Patron de base",
+          "track": "reference",
+          "html": "<p>Chaque événement narratif CK3 est un bloc <code>character_event</code>. Cette structure couvre 100% des événements réels — la plupart n'utilisent qu'un sous-ensemble.</p>\n<ul>\n  <li><strong>trigger</strong> — évalué avant que l'événement se déclenche ; toutes les conditions doivent être vraies</li>\n  <li><strong>immediate</strong> — s'exécute silencieusement dès le déclenchement ; utilisez <code>save_scope_as</code> ici</li>\n  <li><strong>option</strong> — un bloc par choix joueur/IA ; nécessite une clé de localisation <code>name</code></li>\n  <li><strong>ai_chance</strong> — poids pour la décision IA ; <code>base = 100</code> est la valeur neutre</li>\n  <li><strong>stress_impact</strong> — utilisez les constantes nommées : <code>minor_stress_impact_gain</code>, <code>stress_impact_loss</code>, etc.</li>\n</ul>",
+          "snippet": "character-event-full"
+        },
+        {
+          "id": "triggers-cheatsheet",
+          "title": "Référence Triggers",
+          "kicker": "Triggers",
+          "track": "reference",
+          "html": "<p>Les triggers sont des vérifications booléennes. Plusieurs triggers dans un bloc sont implicitement ET.</p>\n<h3>Opérateurs logiques</h3>\n<ul>\n  <li><code>AND = { … }</code> — ET explicite (rarement nécessaire)</li>\n  <li><code>OR = { … }</code> — au moins un doit être vrai</li>\n  <li><code>NOT = { … }</code> — nie un seul trigger</li>\n  <li><code>NOR = { … }</code> — aucun ne doit être vrai</li>\n</ul>\n<h3>Triggers essentiels</h3>\n<table>\n  <tr><th>Trigger</th><th>Exemple</th></tr>\n  <tr><td>is_adult</td><td><code>is_adult = yes</code></td></tr>\n  <tr><td>is_alive</td><td><code>is_alive = yes</code></td></tr>\n  <tr><td>is_landed</td><td><code>is_landed = yes</code></td></tr>\n  <tr><td>is_at_war</td><td><code>is_at_war = no</code></td></tr>\n  <tr><td>is_ai</td><td><code>is_ai = yes</code></td></tr>\n  <tr><td>is_independent_ruler</td><td><code>is_independent_ruler = yes</code></td></tr>\n  <tr><td>has_trait</td><td><code>has_trait = brave</code></td></tr>\n  <tr><td>has_character_flag</td><td><code>has_character_flag = quest_done</code></td></tr>\n  <tr><td>has_variable</td><td><code>has_variable = story_stage</code></td></tr>\n  <tr><td>exists</td><td><code>exists = primary_spouse</code></td></tr>\n  <tr><td>opinion</td><td><code>opinion = { who = liege value >= 20 }</code></td></tr>\n  <tr><td>age</td><td><code>age >= 18</code></td></tr>\n</table>\n<p><strong>any_X</strong> en trigger : vrai si au moins un élément correspond — <code>any_child = { is_adult = yes }</code></p>",
+          "snippet": "scripted-trigger-def"
+        },
+        {
+          "id": "scopes-chaining",
+          "title": "Chaînes de portées (Scopes)",
+          "kicker": "Portées",
+          "track": "reference",
+          "html": "<p>Un scope est l'entité ciblée à un instant donné. Chaque effet et trigger s'exécute dans un contexte de scope.</p>\n<ul>\n  <li><code>root</code> — le propriétaire de l'événement (le personnage sur lequel l'événement s'est déclenché)</li>\n  <li><code>this</code> — le scope actuel (utile dans les blocs imbriqués)</li>\n  <li><code>prev</code> — le scope du niveau supérieur</li>\n  <li><code>scope:name</code> — un scope nommé précédemment sauvegardé</li>\n  <li><code>liege</code>, <code>primary_spouse</code>, <code>father</code> — accesseurs de relations</li>\n</ul>\n<h3>Itérateurs</h3>\n<ul>\n  <li><code>every_X { limit = { … } … }</code> — applique l'effet à tous les correspondants</li>\n  <li><code>random_X { limit = { … } … }</code> — sélectionne un au hasard</li>\n  <li><code>ordered_X { order_by = age position = 0 … }</code> — sélectionne le Nième</li>\n  <li><code>any_X { … }</code> — trigger : au moins un correspond ?</li>\n</ul>",
+          "snippet": "scope-chain-example"
+        },
+        {
+          "id": "effects-cheatsheet",
+          "title": "Référence Effets",
+          "kicker": "Effets",
+          "track": "reference",
+          "html": "<p>Les effets s'exécutent en séquence dans <code>immediate</code> ou dans une <code>option</code>.</p>\n<table>\n  <tr><th>Effet</th><th>Exemple</th></tr>\n  <tr><td>trigger_event</td><td><code>trigger_event = { id = my_mod.0002 days = 3 }</code></td></tr>\n  <tr><td>save_scope_as</td><td><code>save_scope_as = hero</code></td></tr>\n  <tr><td>add_trait</td><td><code>add_trait = brave</code></td></tr>\n  <tr><td>remove_trait</td><td><code>remove_trait = craven</code></td></tr>\n  <tr><td>add_opinion</td><td><code>add_opinion = { modifier = opinion_grateful target = root }</code></td></tr>\n  <tr><td>add_character_flag</td><td><code>add_character_flag = quest_started</code></td></tr>\n  <tr><td>set_variable</td><td><code>set_variable = { name = stage value = 1 }</code></td></tr>\n  <tr><td>change_variable</td><td><code>change_variable = { name = stage add = 1 }</code></td></tr>\n  <tr><td>add_stress</td><td><code>add_stress = minor_stress_impact_gain</code></td></tr>\n  <tr><td>add_gold</td><td><code>add_gold = 50</code></td></tr>\n</table>\n<h3>Constantes stress_impact</h3>\n<p><code>minor_stress_impact_gain</code> · <code>stress_impact_gain</code> · <code>major_stress_impact_gain</code><br><code>minor_stress_impact_loss</code> · <code>stress_impact_loss</code> · <code>major_stress_impact_loss</code></p>"
+        },
+        {
+          "id": "variables-guide",
+          "title": "Variables",
+          "kicker": "Variables",
+          "track": "reference",
+          "html": "<p>Les variables stockent un état personnalisé sur n'importe quel scope et persistent jusqu'à leur suppression.</p>\n<ul>\n  <li><code>var:name</code> — sur le scope courant, persistant</li>\n  <li><code>global_var:name</code> — sur la partie entière, accessible depuis n'importe où</li>\n  <li><code>local_var:name</code> — temporaire, limité au top scope</li>\n</ul>\n<p>Vérifiez toujours l'existence avant de lire : <code>has_variable = story_stage</code>, puis comparez : <code>var:story_stage &gt;= 2</code></p>",
+          "snippet": "variables-example"
+        },
+        {
+          "id": "localization-guide",
+          "title": "Format de localisation",
+          "kicker": "Localisation",
+          "track": "reference",
+          "html": "<p>Tout le texte visible par le joueur se trouve dans des fichiers <code>.yml</code>. Un seul octet d'encodage incorrect casse silencieusement toutes les clés du fichier.</p>\n<ul>\n  <li>Encodage : <strong>UTF-8 avec BOM</strong> (pas l'UTF-8 simple)</li>\n  <li>Première ligne obligatoire : <code>l_english:</code> — L minuscule, pas d'espace après</li>\n  <li>Format des clés : un espace en début de ligne, puis <code>cle: \"valeur\"</code></li>\n  <li>Dossiers : <code>localization/english/</code>, <code>localization/french/</code>, etc.</li>\n  <li>Le nom du fichier doit contenir <code>l_english</code> (ou le code de langue cible)</li>\n</ul>\n<h3>Codes de formatage</h3>\n<table>\n  <tr><th>Code</th><th>Résultat</th></tr>\n  <tr><td><code>#P texte#!</code></td><td>Vert (positif)</td></tr>\n  <tr><td><code>#N texte#!</code></td><td>Rouge (négatif)</td></tr>\n  <tr><td><code>#E texte#!</code></td><td>Bleu clair (concept)</td></tr>\n  <tr><td><code>#bold texte#!</code></td><td>Gras</td></tr>\n  <tr><td><code>\\n</code></td><td>Saut de ligne</td></tr>\n</table>",
+          "snippet": "localization-yml"
+        },
+        {
+          "id": "scripted-reuse",
+          "title": "Triggers & Effets scriptés",
+          "kicker": "Réutilisation",
+          "track": "reference",
+          "html": "<p>Les triggers et effets scriptés sont développés en macro au chargement — aucun coût à l'exécution. Ils se trouvent dans <code>common/scripted_triggers/</code> et <code>common/scripted_effects/</code>.</p>\n<ul>\n  <li>Arguments : déclarez avec <code>$PARAM$</code>, passez comme <code>PARAM = valeur</code> à l'appel</li>\n  <li>Scripted trigger : appelez avec <code>mon_trigger = yes</code></li>\n  <li>Scripted effect : appelez avec <code>mon_effect = yes</code> ou passez des arguments</li>\n  <li>Aucun coût — inlinés au chargement du script</li>\n</ul>"
+        },
+        {
+          "id": "decisions-entry",
+          "title": "Les décisions comme point d'entrée",
+          "kicker": "Déclencheur joueur",
+          "track": "story-cycle",
+          "html": "<p>Un story cycle démarre généralement depuis un <code>on_action</code> (automatique, comme <code>on_game_start</code>) ou depuis une <strong>décision</strong> (déclenchée par le joueur). Les décisions sont l'approche la plus propre pour les scénarios optionnels — le joueur choisit d'entrer.</p>\n<ul>\n  <li><strong>is_shown</strong> — vérification légère pour la visibilité ; garder minimal</li>\n  <li><strong>is_valid</strong> — vérification stricte affichée comme \"prérequis\" ; peut être coûteux</li>\n  <li><strong>is_valid_showing_failures_only</strong> — sous-ensemble de is_valid affiché même en cas d'échec</li>\n  <li><strong>cost</strong> — or, prestige, piété payés à la confirmation</li>\n  <li><strong>effect</strong> — s'exécute à la confirmation ; appeler <code>start_story = { story = mon_cycle }</code> ici</li>\n  <li><strong>picture</strong> — chemin vers une illustration .dds (520×300, compression DXT5/BC3)</li>\n  <li><strong>ai_will_do</strong> — poids de base + liste de modificateurs pour l'IA ; <code>factor = 0</code> bloque complètement</li>\n</ul>\n<p>Emplacement : <code>common/decisions/mon_mod_decisions.txt</code></p>",
+          "snippet": "decision-entry"
+        },
+        {
+          "id": "on-actions-hooks",
+          "title": "Réagir aux événements jeu avec les on_actions",
+          "kicker": "Hooks système",
+          "track": "story-cycle",
+          "html": "<p>Les on_actions permettent à votre story cycle de réagir aux événements que le moteur CK3 déclenche — résultats de combats, fins de guerre, morts, ticks mensuels. C'est ainsi qu'un cycle avance sans attendre un événement à timer.</p>\n<h3>Hooks narratifs les plus utiles</h3>\n<table>\n  <tr><th>on_action</th><th>Quand il se déclenche</th></tr>\n  <tr><td>on_combat_end</td><td>Après tout combat ; root = attaquant</td></tr>\n  <tr><td>on_war_ended_victor</td><td>Victoire de guerre ; root = chef vainqueur</td></tr>\n  <tr><td>on_war_ended_white_peace</td><td>Paix blanche</td></tr>\n  <tr><td>on_war_ended_defeat</td><td>Défaite de guerre</td></tr>\n  <tr><td>on_death</td><td>Mort d'un personnage ; root = défunt</td></tr>\n  <tr><td>on_birth</td><td>Naissance ; root = enfant</td></tr>\n  <tr><td>on_title_gain</td><td>Titre revendiqué ; root = nouveau détenteur</td></tr>\n  <tr><td>on_artifact_gained</td><td>Artefact en inventaire ; root = propriétaire</td></tr>\n  <tr><td>on_monthly_pulse</td><td>Chaque mois — vérification périodique légère</td></tr>\n  <tr><td>on_yearly_pulse</td><td>Chaque année — pour les étapes lentes</td></tr>\n</table>\n<p>Emplacement : <code>common/on_action/mon_mod_on_actions.txt</code>. Toujours protéger avec <code>has_story</code> + un character flag.</p>",
+          "snippet": "on-action-hooks"
+        },
+        {
+          "id": "mod-file-structure",
+          "title": "Structure de fichiers du mod",
+          "kicker": "Organisation",
+          "track": "story-cycle",
+          "html": "<p>Un story cycle réel s'étend sur plusieurs dossiers. Le diff d'une feature narrative CK3 touche typiquement 10 à 20 fichiers dans 6+ répertoires. Voici la structure canonique.</p>\n<ul>\n  <li><code>common/decisions/</code> — points d'entrée déclenchés par le joueur</li>\n  <li><code>common/story_cycles/</code> — définition du cycle (<code>on_setup</code>, <code>on_end</code>, <code>triggered_effect</code>)</li>\n  <li><code>common/on_action/</code> — hooks sur les événements moteur (combat, guerre, mort)</li>\n  <li><code>common/messages/</code> — notifications interface (<code>GOOD_MSG</code>/<code>BAD_MSG</code>)</li>\n  <li><code>common/scripted_effects/</code> — macros d'effets réutilisables</li>\n  <li><code>common/scripted_triggers/</code> — macros de triggers réutilisables</li>\n  <li><code>events/story_cycles/</code> — les événements narratifs</li>\n  <li><code>events/decisions_events/</code> — événements déclenchés par les décisions</li>\n  <li><code>gfx/interface/illustrations/decisions/</code> — images .dds pour les panneaux de décision</li>\n  <li><code>localization/english/event_localization/</code> — fichiers .yml de localisation</li>\n</ul>",
+          "snippet": "mod-file-layout"
+        },
+        {
+          "id": "decisions-reference",
+          "title": "Décisions",
+          "kicker": "Décisions",
+          "track": "reference",
+          "html": "<p>Les décisions sont des actions déclenchées par le joueur dans le panneau de décisions du personnage. Elles sont la méthode canonique pour laisser le joueur démarrer volontairement un story cycle.</p>\n<h3>Champs</h3>\n<table>\n  <tr><th>Champ</th><th>Requis</th><th>Rôle</th></tr>\n  <tr><td>title / desc</td><td>Oui</td><td>Clés de localisation pour le nom et la description</td></tr>\n  <tr><td>picture</td><td>Non</td><td>Chemin vers une illustration .dds (520×300)</td></tr>\n  <tr><td>is_shown</td><td>Oui</td><td>Vérification légère — qui voit la décision</td></tr>\n  <tr><td>is_valid</td><td>Oui</td><td>Vérification stricte — affichée comme prérequis</td></tr>\n  <tr><td>is_valid_showing_failures_only</td><td>Non</td><td>Sous-ensemble de is_valid affiché même en cas d'échec</td></tr>\n  <tr><td>cost</td><td>Non</td><td>or / prestige / piété payés à la confirmation</td></tr>\n  <tr><td>effect</td><td>Oui</td><td>S'exécute à la confirmation</td></tr>\n  <tr><td>ai_will_do</td><td>Non</td><td>Poids pour l'IA ; <code>base</code> + liste de <code>modifier</code></td></tr>\n</table>\n<h3>Points clés</h3>\n<ul>\n  <li>Fichiers : <code>common/decisions/*.txt</code></li>\n  <li>Utiliser <code>start_story = { story = mon_cycle }</code> dans <code>effect</code> pour lancer le cycle</li>\n  <li>Ajouter <code>send_interface_message = { type = msg_key … }</code> pour notifier le joueur</li>\n  <li>Protéger avec un character flag pour que la décision disparaisse après usage</li>\n</ul>",
+          "snippet": "decision-entry"
+        },
+        {
+          "id": "on-actions-reference",
+          "title": "on_actions — Hooks système",
+          "kicker": "on_actions",
+          "track": "reference",
+          "html": "<p>Les on_actions sont le système pub/sub de CK3. Vous vous abonnez à des événements moteur pour faire avancer un story cycle sans intervention du joueur.</p>\n<h3>Anatomie</h3>\n<ul>\n  <li>Fichier : <code>common/on_action/mon_mod_on_actions.txt</code></li>\n  <li>Chaque bloc liste soit <code>events = { id.001 id.002 }</code> soit un <code>effect = { … }</code> inline</li>\n  <li>Plusieurs mods peuvent hooker le même on_action — ils s'exécutent tous</li>\n  <li>Toujours protéger avec <code>has_story</code> + un character flag</li>\n</ul>\n<h3>on_actions utiles pour le narratif</h3>\n<table>\n  <tr><th>on_action</th><th>Scope root</th><th>Notes</th></tr>\n  <tr><td>on_game_start</td><td>aucun</td><td>Démarrage automatique au nouveau jeu</td></tr>\n  <tr><td>on_combat_end</td><td>attaquant</td><td>Scopes attacker / defender disponibles</td></tr>\n  <tr><td>on_war_ended_victor</td><td>chef de guerre</td><td>Aussi : _white_peace, _defeat</td></tr>\n  <tr><td>on_death</td><td>défunt</td><td>Scope killer disponible</td></tr>\n  <tr><td>on_birth</td><td>nouveau-né</td><td>Scopes mother / father disponibles</td></tr>\n  <tr><td>on_title_gain</td><td>nouveau détenteur</td><td>Scope title disponible</td></tr>\n  <tr><td>on_artifact_gained</td><td>nouveau propriétaire</td><td>Scope artifact disponible</td></tr>\n  <tr><td>on_monthly_pulse</td><td>personnage</td><td>S'exécute pour beaucoup de personnages — garder léger</td></tr>\n  <tr><td>on_yearly_pulse</td><td>personnage</td><td>Comme monthly mais annuel</td></tr>\n</table>",
+          "snippet": "on-action-hooks"
+        },
+        {
+          "id": "messages-reference",
+          "title": "Messages interface",
+          "kicker": "Notifications",
+          "track": "reference",
+          "html": "<p>Les messages sont les petites notifications pop-up (bannière colorée en haut de l'écran) qui informent le joueur qu'il s'est passé quelque chose. Définissez-les dans <code>common/messages/</code> et appelez <code>send_interface_message</code> depuis un effet d'événement.</p>\n<h3>Types de messages</h3>\n<table>\n  <tr><th>type</th><th>Couleur</th><th>Utiliser quand</th></tr>\n  <tr><td>GOOD_MSG</td><td>Vert</td><td>Résultat positif pour le joueur</td></tr>\n  <tr><td>NEUTRAL_MSG</td><td>Blanc/gris</td><td>Informatif, sans valence claire</td></tr>\n  <tr><td>BAD_MSG</td><td>Rouge</td><td>Résultat négatif</td></tr>\n</table>\n<h3>Utilisation dans un effect</h3>\n<p><code>send_interface_message = { type = mon_msg title = mon_msg.title left_icon = root }</code></p>\n<p>Fichier : <code>common/messages/mon_mod_messages.txt</code>. Clés de localisation nécessaires : <code>name</code>, <code>text</code>, <code>tooltip</code>.</p>",
+          "snippet": "message-definition"
         }
       ],
       "recipesTitle": "Bibliothèque de recettes",
@@ -1061,6 +1274,108 @@
           "kicker": "Mapa mental",
           "keywords": "esquema diagrama flujo escenario narrativa pipeline visión general global",
           "diagram": "DECLARAR el story_type\n  common/story_cycles/wc_my_path.txt\n    ↓\nEVENTO SETUP OCULTO  (scope = none)\n  create_story → ancla global_var → story_stage = 1\n    ↓\nINTRO VISIBLE\n  presenta el conflicto, introduce actores\n    ↓\nELECCIÓN MAYOR\n  ├─ ruta canónica → recompensas + story_stage++\n  └─ ruta alternativa → flags + riesgos + nuevos eventos\n    ↓\nTEMPORIZADOR EFFECT_GROUP  (fondo)\n  check campeón / progreso / entorno cada N días\n    ↓\nRESOLUCIÓN\n  ├─ final canónico → end_story\n  └─ divergencia no canónica → flag + resolución alternativa"
+        },
+        {
+          "id": "event-anatomy",
+          "title": "Anatomía de un evento",
+          "kicker": "Patrón base",
+          "track": "reference",
+          "html": "<p>Todo evento narrativo de CK3 es un bloque <code>character_event</code>. Esta estructura cubre los eventos reales — la mayoría usa solo un subconjunto.</p>\n<ul>\n  <li><strong>trigger</strong> — evaluado antes de que el evento se active; todas las condiciones deben ser verdaderas</li>\n  <li><strong>immediate</strong> — se ejecuta silenciosamente al activarse; usa <code>save_scope_as</code> aquí</li>\n  <li><strong>option</strong> — un bloque por cada elección del jugador/IA; requiere una clave de localización <code>name</code></li>\n  <li><strong>ai_chance</strong> — peso para la decisión de la IA; <code>base = 100</code> es el valor neutro</li>\n  <li><strong>stress_impact</strong> — usa constantes nombradas: <code>minor_stress_impact_gain</code>, <code>stress_impact_loss</code>, etc.</li>\n</ul>",
+          "snippet": "character-event-full"
+        },
+        {
+          "id": "triggers-cheatsheet",
+          "title": "Referencia de Triggers",
+          "kicker": "Triggers",
+          "track": "reference",
+          "html": "<p>Los triggers son comprobaciones booleanas. Varios triggers en un bloque son implícitamente AND.</p>\n<h3>Operadores lógicos</h3>\n<ul>\n  <li><code>AND = { … }</code> — AND explícito (raramente necesario)</li>\n  <li><code>OR = { … }</code> — al menos uno debe ser verdadero</li>\n  <li><code>NOT = { … }</code> — niega un solo trigger</li>\n  <li><code>NOR = { … }</code> — ninguno debe ser verdadero</li>\n</ul>\n<h3>Triggers esenciales</h3>\n<table>\n  <tr><th>Trigger</th><th>Ejemplo</th></tr>\n  <tr><td>is_adult</td><td><code>is_adult = yes</code></td></tr>\n  <tr><td>is_alive</td><td><code>is_alive = yes</code></td></tr>\n  <tr><td>is_landed</td><td><code>is_landed = yes</code></td></tr>\n  <tr><td>is_at_war</td><td><code>is_at_war = no</code></td></tr>\n  <tr><td>is_ai</td><td><code>is_ai = yes</code></td></tr>\n  <tr><td>is_independent_ruler</td><td><code>is_independent_ruler = yes</code></td></tr>\n  <tr><td>has_trait</td><td><code>has_trait = brave</code></td></tr>\n  <tr><td>has_character_flag</td><td><code>has_character_flag = quest_done</code></td></tr>\n  <tr><td>has_variable</td><td><code>has_variable = story_stage</code></td></tr>\n  <tr><td>exists</td><td><code>exists = primary_spouse</code></td></tr>\n  <tr><td>opinion</td><td><code>opinion = { who = liege value >= 20 }</code></td></tr>\n  <tr><td>age</td><td><code>age >= 18</code></td></tr>\n</table>\n<p><strong>any_X</strong> como trigger: verdadero si al menos un elemento coincide — <code>any_child = { is_adult = yes }</code></p>",
+          "snippet": "scripted-trigger-def"
+        },
+        {
+          "id": "scopes-chaining",
+          "title": "Cadenas de ámbito (Scopes)",
+          "kicker": "Ámbitos",
+          "track": "reference",
+          "html": "<p>Un scope es la entidad objetivo en un momento dado. Cada efecto y trigger se ejecuta en un contexto de scope.</p>\n<ul>\n  <li><code>root</code> — el propietario del evento (el personaje sobre el que se disparó)</li>\n  <li><code>this</code> — el scope actual (útil dentro de bloques anidados)</li>\n  <li><code>prev</code> — el scope un nivel arriba</li>\n  <li><code>scope:name</code> — un scope nombrado guardado previamente</li>\n  <li><code>liege</code>, <code>primary_spouse</code>, <code>father</code> — accesores de relaciones</li>\n</ul>\n<h3>Iteradores</h3>\n<ul>\n  <li><code>every_X { limit = { … } … }</code> — aplica el efecto a todos los que coincidan</li>\n  <li><code>random_X { limit = { … } … }</code> — selecciona uno al azar</li>\n  <li><code>ordered_X { order_by = age position = 0 … }</code> — selecciona el Nth</li>\n  <li><code>any_X { … }</code> — trigger: ¿coincide al menos uno?</li>\n</ul>",
+          "snippet": "scope-chain-example"
+        },
+        {
+          "id": "effects-cheatsheet",
+          "title": "Referencia de Efectos",
+          "kicker": "Efectos",
+          "track": "reference",
+          "html": "<p>Los efectos se ejecutan en secuencia dentro de <code>immediate</code> o dentro de una <code>option</code>.</p>\n<table>\n  <tr><th>Efecto</th><th>Ejemplo</th></tr>\n  <tr><td>trigger_event</td><td><code>trigger_event = { id = my_mod.0002 days = 3 }</code></td></tr>\n  <tr><td>save_scope_as</td><td><code>save_scope_as = hero</code></td></tr>\n  <tr><td>add_trait</td><td><code>add_trait = brave</code></td></tr>\n  <tr><td>remove_trait</td><td><code>remove_trait = craven</code></td></tr>\n  <tr><td>add_opinion</td><td><code>add_opinion = { modifier = opinion_grateful target = root }</code></td></tr>\n  <tr><td>add_character_flag</td><td><code>add_character_flag = quest_started</code></td></tr>\n  <tr><td>set_variable</td><td><code>set_variable = { name = stage value = 1 }</code></td></tr>\n  <tr><td>change_variable</td><td><code>change_variable = { name = stage add = 1 }</code></td></tr>\n  <tr><td>add_stress</td><td><code>add_stress = minor_stress_impact_gain</code></td></tr>\n  <tr><td>add_gold</td><td><code>add_gold = 50</code></td></tr>\n</table>\n<h3>Constantes stress_impact</h3>\n<p><code>minor_stress_impact_gain</code> · <code>stress_impact_gain</code> · <code>major_stress_impact_gain</code><br><code>minor_stress_impact_loss</code> · <code>stress_impact_loss</code> · <code>major_stress_impact_loss</code></p>"
+        },
+        {
+          "id": "variables-guide",
+          "title": "Variables",
+          "kicker": "Variables",
+          "track": "reference",
+          "html": "<p>Las variables almacenan estado personalizado en cualquier scope y persisten hasta que se eliminan.</p>\n<ul>\n  <li><code>var:name</code> — en el scope actual, persistente</li>\n  <li><code>global_var:name</code> — en toda la partida, accesible desde cualquier scope</li>\n  <li><code>local_var:name</code> — temporal, limitado al top scope</li>\n</ul>\n<p>Siempre verifica la existencia antes de leer: <code>has_variable = story_stage</code>, luego compara: <code>var:story_stage &gt;= 2</code></p>",
+          "snippet": "variables-example"
+        },
+        {
+          "id": "localization-guide",
+          "title": "Formato de localización",
+          "kicker": "Localización",
+          "track": "reference",
+          "html": "<p>Todo el texto visible al jugador vive en archivos <code>.yml</code>. Un solo byte de codificación incorrecto rompe silenciosamente todas las claves del archivo.</p>\n<ul>\n  <li>Codificación: <strong>UTF-8 con BOM</strong> (no UTF-8 simple)</li>\n  <li>Primera línea obligatoria: <code>l_english:</code> — L minúscula, sin espacio al final</li>\n  <li>Formato de clave: un espacio al inicio, luego <code>clave: \"valor\"</code></li>\n  <li>Carpetas: <code>localization/english/</code>, <code>localization/french/</code>, etc.</li>\n  <li>El nombre del archivo debe contener <code>l_english</code> (o el código del idioma destino)</li>\n</ul>\n<h3>Códigos de formato</h3>\n<table>\n  <tr><th>Código</th><th>Resultado</th></tr>\n  <tr><td><code>#P texto#!</code></td><td>Verde (positivo)</td></tr>\n  <tr><td><code>#N texto#!</code></td><td>Rojo (negativo)</td></tr>\n  <tr><td><code>#E texto#!</code></td><td>Azul claro (concepto)</td></tr>\n  <tr><td><code>#bold texto#!</code></td><td>Negrita</td></tr>\n  <tr><td><code>\\n</code></td><td>Salto de línea</td></tr>\n</table>",
+          "snippet": "localization-yml"
+        },
+        {
+          "id": "scripted-reuse",
+          "title": "Triggers & Efectos con script",
+          "kicker": "Reutilización",
+          "track": "reference",
+          "html": "<p>Los triggers y efectos con script se expanden como macros en la carga — cero coste en ejecución. Viven en <code>common/scripted_triggers/</code> y <code>common/scripted_effects/</code>.</p>\n<ul>\n  <li>Argumentos: declara con <code>$PARAM$</code>, pasa como <code>PARAM = valor</code> en el punto de llamada</li>\n  <li>Scripted trigger: llama con <code>mi_trigger = yes</code></li>\n  <li>Scripted effect: llama con <code>mi_effect = yes</code> o pasa argumentos</li>\n  <li>Sin coste — se inlínean al cargar el script</li>\n</ul>"
+        },
+        {
+          "id": "decisions-entry",
+          "title": "Las decisiones como punto de entrada",
+          "kicker": "Entrada del jugador",
+          "track": "story-cycle",
+          "html": "<p>Un story cycle normalmente arranca desde un <code>on_action</code> (automático, como <code>on_game_start</code>) o desde una <strong>decisión</strong> (activada por el jugador). Las decisiones son el enfoque más limpio para tramas opcionales.</p>\n<ul>\n  <li><strong>is_shown</strong> — comprobación ligera de visibilidad; mantenerla mínima</li>\n  <li><strong>is_valid</strong> — comprobación estricta mostrada como \"requisitos\"; puede ser costosa</li>\n  <li><strong>is_valid_showing_failures_only</strong> — subconjunto de is_valid mostrado aunque falle</li>\n  <li><strong>cost</strong> — oro, prestigio, piedad pagados al confirmar</li>\n  <li><strong>effect</strong> — se ejecuta al confirmar; llamar <code>start_story = { story = mi_ciclo }</code> aquí</li>\n  <li><strong>picture</strong> — ruta a una ilustración .dds (520×300, compresión DXT5/BC3)</li>\n  <li><strong>ai_will_do</strong> — peso base + lista de modificadores para la IA; <code>factor = 0</code> bloquea completamente</li>\n</ul>\n<p>Ubicación: <code>common/decisions/mi_mod_decisions.txt</code></p>",
+          "snippet": "decision-entry"
+        },
+        {
+          "id": "on-actions-hooks",
+          "title": "Reaccionar a eventos del juego con on_actions",
+          "kicker": "Hooks del sistema",
+          "track": "story-cycle",
+          "html": "<p>Los on_actions permiten que tu story cycle reaccione a lo que el motor CK3 dispara — resultados de combates, finales de guerra, muertes, ticks mensuales.</p>\n<h3>Hooks narrativos más útiles</h3>\n<table>\n  <tr><th>on_action</th><th>Cuándo se dispara</th></tr>\n  <tr><td>on_combat_end</td><td>Tras cualquier combate; root = atacante</td></tr>\n  <tr><td>on_war_ended_victor</td><td>Victoria en guerra; root = líder ganador</td></tr>\n  <tr><td>on_war_ended_white_peace</td><td>Paz blanca</td></tr>\n  <tr><td>on_war_ended_defeat</td><td>Derrota en guerra</td></tr>\n  <tr><td>on_death</td><td>Muerte de personaje; root = fallecido</td></tr>\n  <tr><td>on_birth</td><td>Nacimiento; root = hijo</td></tr>\n  <tr><td>on_title_gain</td><td>Título reclamado; root = nuevo titular</td></tr>\n  <tr><td>on_artifact_gained</td><td>Artefacto en inventario; root = propietario</td></tr>\n  <tr><td>on_monthly_pulse</td><td>Cada mes — comprobación periódica ligera</td></tr>\n  <tr><td>on_yearly_pulse</td><td>Cada año — para etapas lentas</td></tr>\n</table>\n<p>Ubicación: <code>common/on_action/mi_mod_on_actions.txt</code>. Siempre proteger con <code>has_story</code> + un character flag.</p>",
+          "snippet": "on-action-hooks"
+        },
+        {
+          "id": "mod-file-structure",
+          "title": "Estructura de archivos del mod",
+          "kicker": "Organización",
+          "track": "story-cycle",
+          "html": "<p>Un story cycle real abarca múltiples carpetas. El diff de una feature narrativa de CK3 toca típicamente 10-20 archivos en 6+ directorios. Esta es la estructura canónica.</p>\n<ul>\n  <li><code>common/decisions/</code> — puntos de entrada activados por el jugador</li>\n  <li><code>common/story_cycles/</code> — definición del ciclo (<code>on_setup</code>, <code>on_end</code>, <code>triggered_effect</code>)</li>\n  <li><code>common/on_action/</code> — hooks en eventos del motor (combate, guerra, muerte)</li>\n  <li><code>common/messages/</code> — notificaciones de interfaz (<code>GOOD_MSG</code>/<code>BAD_MSG</code>)</li>\n  <li><code>common/scripted_effects/</code> — macros de efectos reutilizables</li>\n  <li><code>common/scripted_triggers/</code> — macros de triggers reutilizables</li>\n  <li><code>events/story_cycles/</code> — los eventos narrativos</li>\n  <li><code>events/decisions_events/</code> — eventos disparados por decisiones</li>\n  <li><code>gfx/interface/illustrations/decisions/</code> — imágenes .dds para paneles de decisión</li>\n  <li><code>localization/english/event_localization/</code> — archivos .yml de localización</li>\n</ul>",
+          "snippet": "mod-file-layout"
+        },
+        {
+          "id": "decisions-reference",
+          "title": "Decisiones",
+          "kicker": "Decisiones",
+          "track": "reference",
+          "html": "<p>Las decisiones son acciones activadas por el jugador en el panel de decisiones del personaje. Son el método canónico para que el jugador inicie voluntariamente un story cycle.</p>\n<h3>Campos</h3>\n<table>\n  <tr><th>Campo</th><th>Requerido</th><th>Propósito</th></tr>\n  <tr><td>title / desc</td><td>Sí</td><td>Claves de localización para nombre y descripción</td></tr>\n  <tr><td>picture</td><td>No</td><td>Ruta a ilustración .dds (520×300)</td></tr>\n  <tr><td>is_shown</td><td>Sí</td><td>Comprobación ligera — quién ve la decisión</td></tr>\n  <tr><td>is_valid</td><td>Sí</td><td>Comprobación estricta — mostrada como requisitos</td></tr>\n  <tr><td>is_valid_showing_failures_only</td><td>No</td><td>Subconjunto de is_valid mostrado aunque falle</td></tr>\n  <tr><td>cost</td><td>No</td><td>oro / prestigio / piedad pagados al confirmar</td></tr>\n  <tr><td>effect</td><td>Sí</td><td>Se ejecuta al confirmar</td></tr>\n  <tr><td>ai_will_do</td><td>No</td><td>Peso para la IA; <code>base</code> + lista de <code>modifier</code></td></tr>\n</table>\n<h3>Puntos clave</h3>\n<ul>\n  <li>Archivos: <code>common/decisions/*.txt</code></li>\n  <li>Usar <code>start_story = { story = mi_ciclo }</code> en <code>effect</code> para lanzar el ciclo</li>\n  <li>Agregar <code>send_interface_message = { type = msg_key … }</code> para notificar al jugador</li>\n  <li>Proteger con un character flag para que la decisión desaparezca tras usarse</li>\n</ul>",
+          "snippet": "decision-entry"
+        },
+        {
+          "id": "on-actions-reference",
+          "title": "on_actions — Hooks del sistema",
+          "kicker": "on_actions",
+          "track": "reference",
+          "html": "<p>Los on_actions son el sistema pub/sub de CK3. Te suscribes a eventos del motor para avanzar un story cycle sin intervención del jugador.</p>\n<h3>Anatomía</h3>\n<ul>\n  <li>Archivo: <code>common/on_action/mi_mod_on_actions.txt</code></li>\n  <li>Cada bloque lista <code>events = { id.001 }</code> o contiene un <code>effect = { … }</code> inline</li>\n  <li>Varios mods pueden hookear el mismo on_action — todos se ejecutan</li>\n  <li>Siempre proteger con <code>has_story</code> + un character flag</li>\n</ul>\n<h3>on_actions útiles para narrativa</h3>\n<table>\n  <tr><th>on_action</th><th>Root scope</th><th>Notas</th></tr>\n  <tr><td>on_game_start</td><td>ninguno</td><td>Inicio automático en nueva partida</td></tr>\n  <tr><td>on_combat_end</td><td>atacante</td><td>Scopes attacker / defender disponibles</td></tr>\n  <tr><td>on_war_ended_victor</td><td>líder de guerra</td><td>También: _white_peace, _defeat</td></tr>\n  <tr><td>on_death</td><td>fallecido</td><td>Scope killer disponible</td></tr>\n  <tr><td>on_birth</td><td>recién nacido</td><td>Scopes mother / father disponibles</td></tr>\n  <tr><td>on_title_gain</td><td>nuevo titular</td><td>Scope title disponible</td></tr>\n  <tr><td>on_artifact_gained</td><td>nuevo propietario</td><td>Scope artifact disponible</td></tr>\n  <tr><td>on_monthly_pulse</td><td>personaje</td><td>Corre para muchos personajes — mantener ligero</td></tr>\n  <tr><td>on_yearly_pulse</td><td>personaje</td><td>Como monthly pero anual</td></tr>\n</table>",
+          "snippet": "on-action-hooks"
+        },
+        {
+          "id": "messages-reference",
+          "title": "Mensajes de interfaz",
+          "kicker": "Notificaciones",
+          "track": "reference",
+          "html": "<p>Los mensajes son las pequeñas notificaciones emergentes (banner de color en la parte superior) que informan al jugador de que algo ocurrió. Defínelos en <code>common/messages/</code> y llama a <code>send_interface_message</code> desde un efecto de evento.</p>\n<h3>Tipos de mensajes</h3>\n<table>\n  <tr><th>type</th><th>Color</th><th>Cuándo usarlo</th></tr>\n  <tr><td>GOOD_MSG</td><td>Verde</td><td>Resultado positivo para el jugador</td></tr>\n  <tr><td>NEUTRAL_MSG</td><td>Blanco/gris</td><td>Informativo, sin valoración</td></tr>\n  <tr><td>BAD_MSG</td><td>Rojo</td><td>Resultado negativo</td></tr>\n</table>\n<h3>Uso en un effect</h3>\n<p><code>send_interface_message = { type = mi_msg title = mi_msg.title left_icon = root }</code></p>\n<p>Archivo: <code>common/messages/mi_mod_messages.txt</code>. Claves de localización necesarias: <code>name</code>, <code>text</code>, <code>tooltip</code>.</p>",
+          "snippet": "message-definition"
         }
       ],
       "recipesTitle": "Biblioteca de recetas",
