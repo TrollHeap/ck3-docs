@@ -11,10 +11,19 @@ const { lang } = Astro.params;
 const L = data.i18n[lang] || data.i18n.en;
 
 const sections = L.docsSections.filter((s) => s.track === 'reference');
-const sidebarItems = sections.map((s) => ({ id: s.id, title: s.title }));
+
+const catOrder = ['evenements', 'logique', 'interface', 'implementation'];
+const catMap = sections.reduce((acc, s) => {
+  const key = s.category || 'other';
+  (acc[key] = acc[key] || []).push({ id: s.id, title: s.title });
+  return acc;
+}, {});
+const sidebarGroups = catOrder
+  .filter((k) => catMap[k])
+  .map((k) => ({ label: L.refCategories?.[k] || k, items: catMap[k] }));
 ---
 
-<AppLayout lang={lang} active="docs" title={L.metaTitle} sidebarItems={sidebarItems}>
+<AppLayout lang={lang} active="docs" title={L.metaTitle} sidebarGroups={sidebarGroups}>
   <section class="hero">
     <div class="kicker">{L.heroEyebrow}</div>
     <h2>{L.heroTitle}</h2>
